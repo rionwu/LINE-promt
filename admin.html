@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 貼圖 Prompt 生成器 - 後台管理系統</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --primary-color: #2e7d32;
+            --primary-hover: #1b5e20;
+            --accent-blue: #1976d2;
+            --text-main: #2b2b2b;
+            --text-sub: #666666;
+            --border-color: #e0e0e0;
+            --input-bg: #fafafa;
+            --danger-color: #d32f2f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Nav */
+        .sidebar {
+            width: 240px;
+            background: #1e293b;
+            color: #fff;
+            padding: 25px 0;
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand {
+            padding: 0 20px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-menu li.active a, .sidebar-menu li a:hover {
+            color: #fff;
+            background: #334155;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 35px 40px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: var(--input-bg);
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            line-height: 1.6;
+            font-family: inherit;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: #555; }
+
+        /* Table Style */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .img-preview-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            width: 100%;
+            max-width: 550px;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 { font-size: 1.2rem; }
+        .close-btn { font-size: 1.5rem; cursor: pointer; color: #888; border: none; background: none; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2b2b2b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        ⚙️ 系統後台管理
+    </div>
+    <ul class="sidebar-menu">
+        <li class="active" onclick="switchTab('artStyles', this)"><a href="#">🎨 畫風與風格管理</a></li>
+        <li onclick="switchTab('promptTemplate', this)"><a href="#">📝 Prompt 模板設定</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1>網站後台管理系統</h1>
+    </div>
+
+    <!-- TAB 1: Art Styles & Sub Styles -->
+    <div id="tab-artStyles" class="tab-content active">
+        <!-- Art Styles Table -->
+        <div class="card">
+            <div class="card-title">
+                <span>畫風選項列表 (Art Styles)</span>
+                <button class="btn btn-primary" onclick="openStyleModal('artStyle')">＋ 新增畫風</button>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>示意圖</th>
+                        <th>畫風名稱</th>
+                        <th>風格描述/特色</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="artStyleTableBody">
+                    <!-- JS populate -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sub Styles Table -->
+        <div class="card">
+            <div class="card-title">
+                <span>細部風格選項列表 (Sub Styles)</span>
+                <button class="btn btn-primary" onclick="openStyleModal('subStyle')">＋ 新增細部風格</button>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>示意圖</th>
+                        <th>風格名稱</th>
+                        <th>所屬大類別</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="subStyleTableBody">
+                    <!-- JS populate -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 2: Prompt Template Config -->
+    <div id="tab-promptTemplate" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <span>Prompt 生成模板自訂</span>
+            </div>
+            <p class="text-sub" style="margin-bottom: 15px; font-size: 0.88rem; color: #666;">
+                您可以使用標籤變數：<code>{artStyle}</code>、<code>{subStyle}</code>、<code>{bgColor}</code>、<code>{textColor}</code>、<code>{linesText}</code>，系統將會自動替換為使用者在前台選擇的變數。
+            </p>
+            <div class="form-group">
+                <label>Prompt 提示詞模板內容</label>
+                <textarea id="promptTemplateInput" rows="18"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="savePromptTemplate()">儲存模板變更</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit Style -->
+<div class="modal-overlay" id="styleModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">新增選項</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="styleForm" onsubmit="handleStyleSubmit(event)">
+            <input type="hidden" id="editType">
+            <input type="hidden" id="editIndex">
+
+            <div class="form-group">
+                <label>名稱</label>
+                <input type="text" id="itemName" required placeholder="例如：水墨風、動漫風">
+            </div>
+
+            <div class="form-group" id="categoryGroup" style="display:none;">
+                <label>所屬分類</label>
+                <select id="itemCategory">
+                    <option value="可愛療癒系">可愛療癒系</option>
+                    <option value="女生類別">女生類別</option>
+                    <option value="男生類別">男生類別</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>示意圖檔名/路徑（例如：image-Q01.png）</label>
+                <input type="text" id="itemImgUrl" placeholder="image-Q01.png" oninput="updateImagePreview(this.value)">
+                <div style="margin-top: 10px;">
+                    <img id="imgPreview" class="img-preview-thumb" style="display:none; width: 100px; height: 100px;" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn btn-primary">儲存資料</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast">設定已成功儲存！</div>
+
+<script>
+    // 預設帶入 GitHub 上的所有圖片路徑
+    const defaultData = {
+        artStyles: [
+            { name: "畫風 01", img: "image-print01.png" },
+            { name: "畫風 02", img: "image-print02.png" },
+            { name: "畫風 03", img: "image-print03.png" },
+            { name: "畫風 04", img: "image-print04.png" },
+            { name: "畫風 05", img: "image-print05.png" },
+            { name: "畫風 06", img: "image-print06.png" },
+            { name: "畫風 07", img: "image-print07.png" },
+            { name: "畫風 08", img: "image-print08.png" },
+            { name: "畫風 09", img: "image-print09.png" },
+            { name: "畫風 10", img: "image-print10.png" },
+            { name: "畫風 11", img: "image-print11.png" }
+        ],
+        subStyles: [
+            // 可愛療癒系
+            { name: "可愛療癒 01", category: "可愛療癒系", img: "image-Q01.png" },
+            { name: "可愛療癒 02", category: "可愛療癒系", img: "image-Q02.png" },
+            { name: "可愛療癒 03", category: "可愛療癒系", img: "image-Q03.png" },
+            { name: "可愛療癒 04", category: "可愛療癒系", img: "image-Q04.png" },
+            { name: "可愛療癒 05", category: "可愛療癒系", img: "image-Q05.png" },
+            { name: "可愛療癒 06", category: "可愛療癒系", img: "image-Q06.png" },
+            { name: "可愛療癒 07", category: "可愛療癒系", img: "image-Q07.png" },
+            { name: "可愛療癒 08", category: "可愛療癒系", img: "image-Q08.png" },
+            { name: "可愛療癒 09", category: "可愛療癒系", img: "image-Q09.png" },
+            { name: "可愛療癒 10", category: "可愛療癒系", img: "image-Q10.png" },
+            // 女生類別
+            { name: "女生風格 01", category: "女生類別", img: "image-girl01.png" },
+            { name: "女生風格 02", category: "女生類別", img: "image-girl02.png" },
+            { name: "女生風格 03", category: "女生類別", img: "image-girl03.png" },
+            { name: "女生風格 04", category: "女生類別", img: "image-girl04.png" },
+            { name: "女生風格 05", category: "女生類別", img: "image-girl05.png" },
+            { name: "女生風格 06", category: "女生類別", img: "image-girl06.png" },
+            { name: "女生風格 07", category: "女生類別", img: "image-girl07.png" },
+            { name: "女生風格 08", category: "女生類別", img: "image-girl08.png" },
+            { name: "女生風格 09", category: "女生類別", img: "image-girl09.png" },
+            { name: "女生風格 10", category: "女生類別", img: "image-girl10.png" },
+            // 男生類別
+            { name: "男生風格 01", category: "男生類別", img: "image-boy01.jpg" },
+            { name: "男生風格 02", category: "男生類別", img: "image-boy02.jpg" },
+            { name: "男生風格 03", category: "男生類別", img: "image-boy03.jpg" },
+            { name: "男生風格 04", category: "男生類別", img: "image-boy04.jpg" },
+            { name: "男生風格 05", category: "男生類別", img: "image-boy05.jpg" },
+            { name: "男生風格 06", category: "男生類別", img: "image-boy06.jpg" },
+            { name: "男生風格 07", category: "男生類別", img: "image-boy07.jpg" },
+            { name: "男生風格 08", category: "男生類別", img: "image-boy08.jpg" },
+            { name: "男生風格 09", category: "男生類別", img: "image-boy09.jpg" },
+            { name: "男生風格 10", category: "男生類別", img: "image-boy10.jpg" }
+        ],
+        template: `以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖畫板。
+
+基本規格：
+- 畫布尺寸：1480×1280 px。
+- 排版方式：4×4，共 16 格。
+- 每格尺寸固定為 370×320 px。
+- 16 張貼圖需從左到右、從上到下排列。
+- 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子2px。
+
+角色一致性：
+- 每一格都是同一角色的不同表情、動作或日常情境。
+- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。
+- 不要讓角色在不同格子中變成不同角色。
+- 角色畫風：{artStyle}
+- 角色風格：{subStyle}
+
+背景與畫面限制：
+- 背景顏色使用色碼{bgColor}
+- 文字顏色使用色碼{textColor}
+- 不要發光效果。
+- 不要陰影光暈。
+
+16 句日常台詞內容：
+{linesText}`
+    };
+
+    function getData() {
+        const stored = localStorage.getItem('sticker_generator_config');
+        if (stored) {
+            try { return JSON.parse(stored); } catch(e) { return defaultData; }
+        }
+        return defaultData;
+    }
+
+    function saveData(data) {
+        localStorage.setItem('sticker_generator_config', JSON.stringify(data));
+        showToast('設定已儲存並同步至前台！');
+    }
+
+    let currentConfig = getData();
+
+    function switchTab(tabId, elem) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.sidebar-menu li').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        elem.classList.add('active');
+    }
+
+    function renderTables() {
+        const artTbody = document.getElementById('artStyleTableBody');
+        artTbody.innerHTML = '';
+        currentConfig.artStyles.forEach((item, idx) => {
+            const imgTag = item.img ? `<img src="${item.img}" class="img-preview-thumb">` : `<span style="color:#aaa;">無圖片</span>`;
+            artTbody.innerHTML += `
+                <tr>
+                    <td>${imgTag}</td>
+                    <td><strong>${item.name}</strong></td>
+                    <td>自訂畫風</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="editItem('artStyle', ${idx})">編輯</button>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="deleteItem('artStyle', ${idx})">刪除</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        const subTbody = document.getElementById('subStyleTableBody');
+        subTbody.innerHTML = '';
+        currentConfig.subStyles.forEach((item, idx) => {
+            const imgTag = item.img ? `<img src="${item.img}" class="img-preview-thumb">` : `<span style="color:#aaa;">無圖片</span>`;
+            subTbody.innerHTML += `
+                <tr>
+                    <td>${imgTag}</td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.8rem;">${item.category || '可愛療癒系'}</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="editItem('subStyle', ${idx})">編輯</button>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="deleteItem('subStyle', ${idx})">刪除</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('promptTemplateInput').value = currentConfig.template;
+    }
+
+    function openStyleModal(type) {
+        document.getElementById('editType').value = type;
+        document.getElementById('editIndex').value = -1;
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemImgUrl').value = '';
+        document.getElementById('categoryGroup').style.display = (type === 'subStyle') ? 'block' : 'none';
+        document.getElementById('imgPreview').style.display = 'none';
+        document.getElementById('modalTitle').innerText = (type === 'artStyle') ? '新增畫風選項' : '新增細部風格選項';
+        document.getElementById('styleModal').style.display = 'flex';
+    }
+
+    function editItem(type, idx) {
+        document.getElementById('editType').value = type;
+        document.getElementById('editIndex').value = idx;
+        const item = (type === 'artStyle') ? currentConfig.artStyles[idx] : currentConfig.subStyles[idx];
+        
+        document.getElementById('itemName').value = item.name;
+        document.getElementById('categoryGroup').style.display = (type === 'subStyle') ? 'block' : 'none';
+        if (type === 'subStyle') {
+            document.getElementById('itemCategory').value = item.category || '可愛療癒系';
+        }
+
+        const imgUrl = item.img || '';
+        document.getElementById('itemImgUrl').value = imgUrl;
+        updateImagePreview(imgUrl);
+
+        document.getElementById('modalTitle').innerText = '編輯選項';
+        document.getElementById('styleModal').style.display = 'flex';
+    }
+
+    function updateImagePreview(url) {
+        const previewImg = document.getElementById('imgPreview');
+        if (url.trim()) {
+            previewImg.src = url.trim();
+            previewImg.style.display = 'block';
+        } else {
+            previewImg.style.display = 'none';
+        }
+    }
+
+    function deleteItem(type, idx) {
+        if (confirm('確定要刪除此選項嗎？')) {
+            if (type === 'artStyle') {
+                currentConfig.artStyles.splice(idx, 1);
+            } else {
+                currentConfig.subStyles.splice(idx, 1);
+            }
+            saveData(currentConfig);
+            renderTables();
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('styleModal').style.display = 'none';
+    }
+
+    function handleStyleSubmit(e) {
+        e.preventDefault();
+        const type = document.getElementById('editType').value;
+        const idx = parseInt(document.getElementById('editIndex').value);
+        const name = document.getElementById('itemName').value.trim();
+        const category = document.getElementById('itemCategory').value;
+        const imgUrl = document.getElementById('itemImgUrl').value.trim();
+
+        if (!name) return;
+
+        const newItem = {
+            name: name,
+            img: imgUrl
+        };
+        if (type === 'subStyle') newItem.category = category;
+
+        if (type === 'artStyle') {
+            if (idx >= 0) { currentConfig.artStyles[idx] = newItem; }
+            else { currentConfig.artStyles.push(newItem); }
+        } else {
+            if (idx >= 0) { currentConfig.subStyles[idx] = newItem; }
+            else { currentConfig.subStyles.push(newItem); }
+        }
+
+        saveData(currentConfig);
+        renderTables();
+        closeModal();
+    }
+
+    function savePromptTemplate() {
+        const val = document.getElementById('promptTemplateInput').value;
+        currentConfig.template = val;
+        saveData(currentConfig);
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
+
+    // Initialize
+    renderTables();
+</script>
+</body>
+</html>

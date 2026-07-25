@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 貼圖 Prompt 生成器</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --primary-green: #2e7d32;
+            --primary-green-hover: #1b5e20;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --border-color: #e0e0e0;
+            --input-bg: #fcfcfc;
+            --preset-btn-bg: #f1c40f;
+            --preset-btn-hover: #f39c12;
+            --preview-bg: #f5f3ef;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #444;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker-box {
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .color-picker-box input[type="color"] {
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: var(--input-bg);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary-green);
+        }
+
+        .category-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .cat-btn {
+            flex: 1;
+            padding: 10px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .cat-btn.active {
+            background: var(--primary-green);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Image Display Section */
+        .preview-images-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card-preview {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            min-height: 250px;
+            justify-content: center;
+        }
+
+        .card-preview img {
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .card-preview svg {
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .card-preview .caption {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            font-weight: bold;
+        }
+
+        /* Dialog lines section */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            margin-top: 25px;
+        }
+
+        .preset-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            background-color: #f5b041;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .preset-btn:hover {
+            background-color: #e67e22;
+        }
+
+        .lines-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* Generate & Copy Button */
+        .action-area {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn-copy {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background-color: var(--primary-green-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Output Preview Box */
+        .prompt-preview-box {
+            background-color: var(--preview-bg);
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .prompt-preview-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        .prompt-textarea {
+            width: 100%;
+            height: 280px;
+            border: 1px solid #dcd6cd;
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #333;
+            resize: vertical;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>AI 貼圖 Prompt 生成器</h1>
+        <p>自訂背景色、文字顏色、畫風、風格和 16 句台詞，一鍵生成完整的 AI 貼圖製作提示詞</p>
+    </div>
+
+    <!-- Background & Text Color -->
+    <div class="grid-2">
+        <div class="form-group">
+            <label>背景色碼</label>
+            <div class="color-input-wrapper">
+                <div class="color-picker-box" id="bgColorBox" style="background-color: #E800E8;">
+                    <input type="color" id="bgColorPicker" value="#E800E8" onchange="updateColor('bg', this.value)">
+                </div>
+                <input type="text" id="bgColorText" value="#E800E8" oninput="updateColor('bg', this.value)">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>文字色碼</label>
+            <div class="color-input-wrapper">
+                <div class="color-picker-box" id="textColorBox" style="background-color: #424200;">
+                    <input type="color" id="textColorPicker" value="#424200" onchange="updateColor('text', this.value)">
+                </div>
+                <input type="text" id="textColorText" value="#424200" oninput="updateColor('text', this.value)">
+            </div>
+        </div>
+    </div>
+
+    <!-- Art Style & Style Select -->
+    <div class="grid-2">
+        <div class="form-group">
+            <label>畫風</label>
+            <select id="artStyleSelect" onchange="handleStyleChange()">
+                <!-- Populated dynamically -->
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>風格分類與選項</label>
+            <div class="category-buttons">
+                <button class="cat-btn active" id="btn-cute" onclick="selectCategory('可愛療癒系')">可愛療癒系</button>
+                <button class="cat-btn" id="btn-female" onclick="selectCategory('女生類別')">女生類別</button>
+                <button class="cat-btn" id="btn-male" onclick="selectCategory('男生類別')">男生類別</button>
+            </div>
+            <!-- Sub-style dropdown (Always Visible) -->
+            <div style="margin-top: 10px;" id="subStyleWrapper">
+                <select id="subStyleSelect" onchange="handleSubStyleChange()">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Preview Cards Row -->
+    <div class="preview-images-row" id="previewRow">
+        <div class="card-preview" id="artStyleCard"></div>
+        <div class="card-preview" id="subStyleCard"></div>
+    </div>
+
+    <!-- 16 Lines Preset Section -->
+    <div class="section-title">16 句日常台詞</div>
+    <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">快速套用預設台詞：</div>
+    <div class="preset-tags">
+        <button class="preset-btn" onclick="applyPreset('甜蜜情侶')">甜蜜情侶</button>
+        <button class="preset-btn" onclick="applyPreset('日常碎碎念')">日常碎碎念</button>
+        <button class="preset-btn" onclick="applyPreset('職場小姐')">職場小姐</button>
+        <button class="preset-btn" onclick="applyPreset('療癒系')">療癒系</button>
+        <button class="preset-btn" onclick="applyPreset('搞笑逗趣')">搞笑逗趣</button>
+    </div>
+
+    <!-- 16 Line Inputs -->
+    <div class="lines-grid" id="linesGrid"></div>
+
+    <!-- Action Button -->
+    <div class="action-area">
+        <button class="btn-copy" onclick="copyPrompt()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            複製 Prompt
+        </button>
+    </div>
+
+    <!-- Output Textarea Section -->
+    <div class="prompt-preview-box">
+        <h3>預覽 Prompt</h3>
+        <textarea class="prompt-textarea" id="promptResult" readonly></textarea>
+    </div>
+</div>
+
+<div class="footer">
+    © 2026 StickerFaster. All rights reserved.
+</div>
+
+<div class="toast" id="toast">已成功複製 Prompt 到剪貼簿！</div>
+
+<script>
+    let currentCategory = '可愛療癒系';
+    
+    const defaultData = {
+        artStyles: [
+            { name: "水墨風", img: "" },
+            { name: "日系插畫風", img: "" },
+            { name: "Q版可愛風", img: "" },
+            { name: "3D黏土風", img: "" },
+            { name: "美式漫畫風", img: "" }
+        ],
+        subStyles: [
+            // 可愛療癒系
+            { name: "圓滾滾動物風", category: "可愛療癒系", img: "" },
+            { name: "軟萌貓咪風", category: "可愛療癒系", img: "" },
+            { name: "搞笑柴犬風", category: "可愛療癒系", img: "" },
+            // 女生類別
+            { name: "甜美少女風", category: "女生類別", img: "" },
+            { name: "時尚穿搭風", category: "女生類別", img: "" },
+            { name: "溫柔熟女風", category: "女生類別", img: "" },
+            // 男生類別
+            { name: "陽光少年風", category: "男生類別", img: "" },
+            { name: "韓系帥哥風", category: "男生類別", img: "" },
+            { name: "商務男士風", category: "男生類別", img: "" }
+        ],
+        template: `以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖畫板。
+
+基本規格：
+- 畫布尺寸：1480×1280 px。
+- 排版方式：4×4，共 16 格。
+- 每格尺寸固定為 370×320 px。
+- 16 張貼圖需從左到右、從上到下排列。
+- 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子2px。
+
+角色一致性：
+- 每一格都是同一角色的不同表情、動作或日常情境。
+- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。
+- 不要讓角色在不同格子中變成不同角色。
+- 角色畫風：{artStyle}
+- 角色風格：{subStyle}
+
+背景與畫面限制：
+- 背景顏色使用色碼{bgColor}
+- 文字顏色使用色碼{textColor}
+- 不要發光效果。
+- 不要陰影光暈。
+
+16 句日常台詞內容：
+{linesText}`
+    };
+
+    function getConfig() {
+        const stored = localStorage.getItem('sticker_generator_config');
+        if (stored) {
+            try { return JSON.parse(stored); } catch(e) { return defaultData; }
+        }
+        return defaultData;
+    }
+
+    const presets = {
+        '甜蜜情侶': ['想你了', '寶貝早安', '抱抱', '愛你喔', '晚安咪咪', '等你回家', '想吃什麼', '辛苦啦', '牽牽', '哼不理你了', '要一直在一起', '想見你', '有你真好', '啾咪', '好想你呀', '陪伴是最長情的告白'],
+        '日常碎碎念': ['台詞 1', '台詞 2', '台詞 3', '台詞 4', '台詞 5', '台詞 6', '台詞 7', '台詞 8', '台詞 9', '台詞 10', '台詞 11', '台詞 12', '台詞 13', '台詞 14', '台詞 15', '台詞 16'],
+        '職場小姐': ['收到', '馬上處理', '辛苦了！', '好的沒問題', '會議中', '下班萬歲', '加油加油', '辛苦大家', '咖啡續命', '求求了', '等我一下', '收到謝謝', '打卡成功', '準備休假', '週五萬歲', '先忙一下'],
+        '療癒系': ['謝謝你', '抱抱自己', '今天也是美好的一天', '慢慢來沒關係', '辛苦了喔', '喝口水休息一下', '加油你很棒', '平安喜樂', '暖暖的', '順其自然', '放鬆一下', '給自己一個微笑', '一切都是最好的安排', '好好休息', '深呼吸', '明天會更好'],
+        '搞笑逗趣': ['傻眼貓咪', '阿不就好棒棒', '問號', '你確定？', '嚇到吃手手', '給你看個好東西', '我太難了', '社交恐懼發作', '躺平了', '算你狠', '笑死', '關我屁事', '好哦', '沒錢了哭哭', '我就靜靜看著你', '吃貨本色']
+    };
+
+    // Initialize 16 inputs
+    const linesGrid = document.getElementById('linesGrid');
+    for (let i = 1; i <= 16; i++) {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = `
+            <label>台詞 ${i}</label>
+            <input type="text" id="line_${i}" value="台詞 ${i}" oninput="updatePrompt()">
+        `;
+        linesGrid.appendChild(div);
+    }
+
+    function initOptions() {
+        const config = getConfig();
+        
+        // Render Art Styles Select
+        const artSelect = document.getElementById('artStyleSelect');
+        const currentArt = artSelect.value;
+        artSelect.innerHTML = '';
+        config.artStyles.forEach(item => {
+            artSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+        });
+        if (currentArt) artSelect.value = currentArt;
+
+        // Render Sub Styles Select
+        const subSelect = document.getElementById('subStyleSelect');
+        subSelect.innerHTML = '';
+        const filteredSubs = config.subStyles.filter(s => s.category === currentCategory);
+        
+        if (filteredSubs.length > 0) {
+            filteredSubs.forEach(item => {
+                subSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+            });
+        } else {
+            subSelect.innerHTML = `<option value="${currentCategory}">預設${currentCategory}</option>`;
+        }
+    }
+
+    function updateColor(type, value) {
+        if (type === 'bg') {
+            document.getElementById('bgColorBox').style.backgroundColor = value;
+            document.getElementById('bgColorPicker').value = value;
+            document.getElementById('bgColorText').value = value;
+        } else {
+            document.getElementById('textColorBox').style.backgroundColor = value;
+            document.getElementById('textColorPicker').value = value;
+            document.getElementById('textColorText').value = value;
+        }
+        updatePrompt();
+    }
+
+    function selectCategory(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+        
+        if (cat === '可愛療癒系') {
+            document.getElementById('btn-cute').classList.add('active');
+        } else if (cat === '女生類別') {
+            document.getElementById('btn-female').classList.add('active');
+        } else {
+            document.getElementById('btn-male').classList.add('active');
+        }
+        
+        // 確保下拉選單隨時保持顯示狀態
+        document.getElementById('subStyleWrapper').style.display = 'block';
+        initOptions();
+        handleStyleChange();
+    }
+
+    function applyPreset(presetName) {
+        const list = presets[presetName];
+        if (list) {
+            for (let i = 1; i <= 16; i++) {
+                document.getElementById(`line_${i}`).value = list[i - 1] || `台詞 ${i}`;
+            }
+            updatePrompt();
+        }
+    }
+
+    function createInkPandaSVG() {
+        return `<svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="320" rx="16" fill="#fdfbf7"/>
+            <rect x="15" y="15" width="270" height="290" rx="12" fill="#faf8f3" stroke="#e6e1d6" stroke-width="2"/>
+            <circle cx="50" cy="50" r="18" fill="#2c3e50"/>
+            <text x="50" y="56" fill="#fff" font-size="18" font-weight="bold" text-anchor="middle">1</text>
+            <text x="80" y="58" fill="#2c3e50" font-size="22" font-weight="bold">水墨風</text>
+            <path d="M 90 180 Q 70 120 150 110 Q 230 100 220 180 Q 210 240 140 230 Q 80 220 90 180 Z" fill="#e2e2e2" opacity="0.6"/>
+            <circle cx="110" cy="130" r="22" fill="#222"/>
+            <circle cx="190" cy="130" r="22" fill="#222"/>
+            <ellipse cx="150" cy="170" rx="55" ry="48" fill="#fff" stroke="#222" stroke-width="4"/>
+            <ellipse cx="130" cy="165" rx="16" ry="20" fill="#222" transform="rotate(-15 130 165)"/>
+            <ellipse cx="170" cy="165" rx="16" ry="20" fill="#222" transform="rotate(15 170 165)"/>
+            <circle cx="132" cy="163" r="4" fill="#fff"/>
+            <circle cx="168" cy="163" r="4" fill="#fff"/>
+            <ellipse cx="150" cy="180" rx="7" ry="5" fill="#222"/>
+            <path d="M 145 188 Q 150 193 155 188" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 110 205 Q 150 220 190 205 Q 210 260 90 260 Z" fill="#222"/>
+            <path d="M 80 230 Q 130 200 220 210" fill="none" stroke="#2e7d32" stroke-width="5" stroke-linecap="round"/>
+            <rect x="30" y="255" width="240" height="36" rx="8" fill="#f0ebe1" stroke="#d5cebe"/>
+            <text x="150" y="278" fill="#4a4238" font-size="13" font-weight="bold" text-anchor="middle">特色：墨韻暈染、留白意境</text>
+        </svg>`;
+    }
+
+    function createShibaSVG() {
+        return `<svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="320" rx="16" fill="#fdfbf7"/>
+            <rect x="15" y="15" width="270" height="290" rx="12" fill="#ffffff" stroke="#f0e6df" stroke-width="2"/>
+            <circle cx="50" cy="50" r="18" fill="#e89b74"/>
+            <text x="50" y="56" fill="#fff" font-size="18" font-weight="bold" text-anchor="middle">2</text>
+            <text x="80" y="58" fill="#5a3d28" font-size="20" font-weight="bold">風格示意圖</text>
+            <polygon points="95,110 120,70 140,115" fill="#e59866"/>
+            <polygon points="205,110 180,70 160,115" fill="#e59866"/>
+            <ellipse cx="150" cy="145" rx="60" ry="50" fill="#edbb99"/>
+            <ellipse cx="150" cy="160" rx="42" ry="32" fill="#ffffff"/>
+            <ellipse cx="125" cy="135" rx="6" ry="8" fill="#422517"/>
+            <ellipse cx="175" cy="135" rx="6" ry="8" fill="#422517"/>
+            <ellipse cx="110" cy="150" rx="10" ry="6" fill="#f1948a" opacity="0.6"/>
+            <ellipse cx="190" cy="150" rx="10" ry="6" fill="#f1948a" opacity="0.6"/>
+            <ellipse cx="150" cy="148" rx="6" ry="4" fill="#422517"/>
+            <path d="M 144 154 Q 150 160 156 154" fill="none" stroke="#422517" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 150 182 C 150 182 135 168 125 180 C 115 192 135 208 150 218 C 165 208 185 192 175 180 C 165 168 150 182 150 182 Z" fill="#e74c3c"/>
+            <text x="210" y="200" fill="#5a3d28" font-size="22" font-weight="bold">謝謝你</text>
+        </svg>`;
+    }
+
+    function handleStyleChange() {
+        const artStyle = document.getElementById('artStyleSelect').value || (defaultData.artStyles[0] ? defaultData.artStyles[0].name : '');
+        const subStyle = document.getElementById('subStyleSelect').value || currentCategory;
+        const artCard = document.getElementById('artStyleCard');
+        const subCard = document.getElementById('subStyleCard');
+
+        const config = getConfig();
+        
+        // Render Art Style Card
+        const artItem = config.artStyles.find(a => a.name === artStyle);
+        if (artItem && artItem.img) {
+            artCard.innerHTML = `<img src="${artItem.img}"><div class="caption">${artStyle}</div>`;
+        } else {
+            artCard.innerHTML = createInkPandaSVG() + `<div class="caption">${artStyle || '預設畫風'}</div>`;
+        }
+
+        // Render Sub Style Card
+        const subItem = config.subStyles.find(s => s.name === subStyle);
+        if (subItem && subItem.img) {
+            subCard.innerHTML = `<img src="${subItem.img}"><div class="caption">${subStyle}</div>`;
+        } else {
+            subCard.innerHTML = createShibaSVG() + `<div class="caption">${subStyle}</div>`;
+        }
+
+        updatePrompt();
+    }
+
+    function handleSubStyleChange() {
+        handleStyleChange();
+    }
+
+    function updatePrompt() {
+        const config = getConfig();
+        const bgColor = document.getElementById('bgColorText').value;
+        const textColor = document.getElementById('textColorText').value;
+        const artStyle = document.getElementById('artStyleSelect').value || '預設畫風';
+        const subStyle = document.getElementById('subStyleSelect').value || currentCategory;
+
+        let linesText = '';
+        for (let i = 1; i <= 16; i++) {
+            const val = document.getElementById(`line_${i}`).value || `台詞 ${i}`;
+            linesText += `    - 台詞 ${i}：${val}\n`;
+        }
+
+        let promptTemplate = config.template || defaultData.template;
+        promptTemplate = promptTemplate
+            .replace(/{artStyle}/g, artStyle)
+            .replace(/{subStyle}/g, subStyle)
+            .replace(/{bgColor}/g, bgColor)
+            .replace(/{textColor}/g, textColor)
+            .replace(/{linesText}/g, linesText);
+
+        document.getElementById('promptResult').value = promptTemplate;
+    }
+
+    function copyPrompt() {
+        const textarea = document.getElementById('promptResult');
+        textarea.select();
+        document.execCommand('copy');
+        
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+
+    // Initialize
+    initOptions();
+    handleStyleChange();
+</script>
+
+</body>
+</html>
