@@ -259,13 +259,40 @@
     let currentCategory = '可愛療癒系';
     let bgPickr, textPickr;
 
+   // 檢測並跳出 LINE 內建瀏覽器
+    function checkAndOpenExternalBrowser() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isLine = ua.indexOf('Line') > -1 || ua.indexOf('LINE') > -1;
+
+        if (isLine) {
+            const currentUrl = window.location.href;
+            
+            // 判斷系統平台
+            if (/android/i.test(ua)) {
+                // Android 系統：透過 intent 強制呼叫系統預設 Chrome / 瀏覽器
+                const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                window.location.href = intentUrl;
+            } else if (/iPhone|iPad|iPod/i.test(ua)) {
+                // iOS 系統：利用 LINE 專屬 openExternalBrowser 參數喚起 Safari
+                if (currentUrl.indexOf('openExternalBrowser=1') === -1) {
+                    const delimiter = currentUrl.indexOf('?') > -1 ? '&' : '?';
+                    window.location.href = currentUrl + delimiter + 'openExternalBrowser=1';
+                }
+            }
+        }
+    }
+
+    // 頁面初始化
     function init() {
+        checkAndOpenExternalBrowser(); // 優先執行動態跳轉檢查
         initPickr();
         render16Inputs();
         loadArtStyles();
         loadSubStyles();
         applyPreset('daily');
     }
+
+    init();
 
     // 初始化第三方 Pickr 色盤
     function initPickr() {
