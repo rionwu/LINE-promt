@@ -255,25 +255,22 @@
         return defaultData;
     }
 
-    const config = getConfig();
+    // 將 config 改為可變動全域變數，方便完整覆蓋
+    let config = getConfig();
     let currentCategory = '可愛療癒系';
     let bgPickr, textPickr;
 
-   // 檢測並跳出 LINE 內建瀏覽器
+    // 檢測並跳出 LINE 內建瀏覽器
     function checkAndOpenExternalBrowser() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isLine = ua.indexOf('Line') > -1 || ua.indexOf('LINE') > -1;
 
         if (isLine) {
             const currentUrl = window.location.href;
-            
-            // 判斷系統平台
             if (/android/i.test(ua)) {
-                // Android 系統：透過 intent 強制呼叫系統預設 Chrome / 瀏覽器
                 const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
                 window.location.href = intentUrl;
             } else if (/iPhone|iPad|iPod/i.test(ua)) {
-                // iOS 系統：利用 LINE 專屬 openExternalBrowser 參數喚起 Safari
                 if (currentUrl.indexOf('openExternalBrowser=1') === -1) {
                     const delimiter = currentUrl.indexOf('?') > -1 ? '&' : '?';
                     window.location.href = currentUrl + delimiter + 'openExternalBrowser=1';
@@ -282,17 +279,35 @@
         }
     }
 
+    // 重新讀取並完全覆蓋 config 資料
+    function reloadConfigAndUI() {
+        config = getConfig(); // 直接替換整個物件
+        loadArtStyles();
+        loadSubStyles();
+        buildPrompt();
+    }
+
+    // 監聽後台對 LocalStorage 的變更
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'sticker_generator_config') {
+            reloadConfigAndUI();
+        }
+    });
+
+    // 分頁切換回前台時自動重新載入
+    window.addEventListener('focus', () => {
+        reloadConfigAndUI();
+    });
+
     // 頁面初始化
     function init() {
-        checkAndOpenExternalBrowser(); // 優先執行動態跳轉檢查
+        checkAndOpenExternalBrowser();
         initPickr();
         render16Inputs();
         loadArtStyles();
         loadSubStyles();
         applyPreset('daily');
     }
-
-    init();
 
     // 初始化第三方 Pickr 色盤
     function initPickr() {
@@ -361,7 +376,8 @@
     function loadArtStyles() {
         const select = document.getElementById('artStyleSelect');
         select.innerHTML = '';
-        config.artStyles.forEach(item => {
+        const styles = config.artStyles || defaultData.artStyles;
+        styles.forEach(item => {
             const opt = document.createElement('option');
             opt.value = item.name;
             opt.dataset.img = item.img;
@@ -391,7 +407,8 @@
     function loadSubStyles() {
         const select = document.getElementById('subStyleSelect');
         select.innerHTML = '';
-        const filtered = config.subStyles.filter(s => s.category === currentCategory || !s.category);
+        const allSubStyles = config.subStyles || defaultData.subStyles;
+        const filtered = allSubStyles.filter(s => s.category === currentCategory || !s.category);
         
         filtered.forEach(item => {
             const opt = document.createElement('option');
@@ -461,39 +478,8 @@
             alert('📋 已成功複製 Prompt 提示詞！');
         });
     }
-// 重新讀取並刷新前台選單資料
-function reloadConfigAndUI() {
-    const freshConfig = getConfig(); // 重新讀取 LocalStorage
-    // 覆蓋當前的 config 物件內容
-    Object.assign(config, freshConfig); 
-    
-    // 重新載入選單與預覽
-    loadArtStyles();
-    loadSubStyles();
-}
 
-// 監聽其他分頁（後台）對 LocalStorage 的修改
-window.addEventListener('storage', (event) => {
-    if (event.key === 'sticker_generator_config') {
-        reloadConfigAndUI();
-    }
-});
-
-// 當使用者切換回前台頁面時，自動更新資料
-window.addEventListener('focus', () => {
-    reloadConfigAndUI();
-});
-
-// 頁面初始化
-function init() {
-    checkAndOpenExternalBrowser();
-    initPickr();
-    render16Inputs();
-    loadArtStyles();
-    loadSubStyles();
-    applyPreset('daily');
-}
-
+    // 啟動頁面
     init();
 </script>
 
