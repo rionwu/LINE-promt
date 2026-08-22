@@ -461,6 +461,40 @@
             alert('📋 已成功複製 Prompt 提示詞！');
         });
     }
+// 重新讀取並刷新前台選單資料
+function reloadConfigAndUI() {
+    const freshConfig = getConfig(); // 重新讀取 LocalStorage
+    // 覆蓋當前的 config 物件內容
+    Object.assign(config, freshConfig); 
+    
+    // 重新載入選單與預覽
+    loadArtStyles();
+    loadSubStyles();
+}
+
+// 監聽其他分頁（後台）對 LocalStorage 的修改
+window.addEventListener('storage', (event) => {
+    if (event.key === 'sticker_generator_config') {
+        reloadConfigAndUI();
+    }
+});
+
+// 當使用者切換回前台頁面時，自動更新資料
+window.addEventListener('focus', () => {
+    reloadConfigAndUI();
+});
+
+// 頁面初始化
+function init() {
+    checkAndOpenExternalBrowser();
+    initPickr();
+    render16Inputs();
+    loadArtStyles();
+    loadSubStyles();
+    applyPreset('daily');
+}
+
+init();
 
     init();
 </script>
