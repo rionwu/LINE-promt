@@ -22,17 +22,19 @@
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .header h1 { font-size: 1.8rem; font-weight: 800; }
-        .top-btns { display: flex; gap: 10px; }
 
         .btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; font-size: 0.9rem; }
         .btn-primary { background: var(--primary-color); color: white; }
         .btn-primary:hover { background: var(--primary-hover); }
-        .btn-github { background: #16a34a; color: white; }
-        .btn-github:hover { background: #15803d; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-success:hover { background: #15803d; }
         .btn-danger { background: var(--danger-color); color: white; }
 
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card h2 { font-size: 1.2rem; margin-bottom: 16px; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+
+        .github-config { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px; }
+        .github-config input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
 
         .item-list { display: grid; gap: 10px; margin-bottom: 16px; }
         .item-row { display: flex; gap: 10px; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -48,100 +50,97 @@
 
 <div class="container">
     <div class="header">
-        <h1>貼圖生成器 - 後台管理系統</h1>
-        <div class="top-btns">
-            <button class="btn btn-github" onclick="exportCodeForGitHub()">📋 複製 GitHub 全域程式碼</button>
-            <button class="btn btn-primary" onclick="saveConfig()">💾 儲存修改 (本機)</button>
+        <h1>貼圖生成器 - 後台管理</h1>
+        <button class="btn btn-success" onclick="saveAndPushToGitHub()">💾 儲存並同步至 GitHub</button>
+    </div>
+
+    <!-- GitHub 連線設定 -->
+    <div class="card">
+        <h2>1. GitHub 自動連線設定 (僅保存在個人瀏覽器)</h2>
+        <div class="github-config">
+            <input type="text" id="ghRepo" placeholder="GitHub Repo (範例: user/repo-name)">
+            <input type="text" id="ghBranch" placeholder="分支 (預設: main)" value="main">
+            <input type="password" id="ghToken" placeholder="Personal Access Token (PAT)">
         </div>
+        <small style="color: #64748b; margin-top: 8px; display: block;">* Token 需有 repo 的 write 權限。Token 僅存於您本機，不會對外外洩。</small>
     </div>
 
     <!-- 畫風管理 -->
     <div class="card">
-        <h2>1. 畫風管理 (Art Styles)</h2>
+        <h2>2. 畫風管理 (Art Styles)</h2>
         <div id="artStylesList" class="item-list"></div>
         <button class="btn btn-primary" onclick="addArtStyle()">+ 新增畫風</button>
     </div>
 
     <!-- 風格管理 -->
     <div class="card">
-        <h2>2. 風格管理 (Sub Styles)</h2>
+        <h2>3. 風格管理 (Sub Styles)</h2>
         <div id="subStylesList" class="item-list"></div>
         <button class="btn btn-primary" onclick="addSubStyle()">+ 新增風格</button>
     </div>
 
     <!-- Prompt 模板設定 -->
     <div class="card">
-        <h2>3. Prompt 模板設定</h2>
+        <h2>4. Prompt 模板設定</h2>
         <textarea id="templateInput" class="template-box"></textarea>
     </div>
 </div>
 
 <script>
-    // 修正後的乾淨全域預設資料
-    const defaultData = {
-        "artStyles": [
-            { "name": "水墨風", "img": "image-print01.jpg" },
-            { "name": "色鉛筆風", "img": "image-print02.jpg" },
-            { "name": "油畫風", "img": "image-print03.jpg" },
-            { "name": "剪紙風", "img": "image-print04.jpg" },
-            { "name": "像素Pexel風", "img": "image-print05.jpg" },
-            { "name": "黏土3D風", "img": "image-print06.jpg" },
-            { "name": "羊毛氈風", "img": "image-print07.jpg" },
-            { "name": "版畫風", "img": "image-print08.jpg" },
-            { "name": "復古海報風", "img": "image-print09.jpg" },
-            { "name": "玻璃彩繪風", "img": "image-print10.jpg" },
-            { "name": "手繪塗鴉風", "img": "image-print11.jpg" }
-        ],
-        "subStyles": [
-            { "name": "Q版大頭娃娃風", "category": "可愛療癒系", "img": "image-Q01.png" },
-            { "name": "圓滾滾動物風", "category": "可愛療癒系", "img": "image-Q02.png" },
-            { "name": "奶油手繪風", "category": "可愛療癒系", "img": "image-Q03.png" },
-            { "name": "馬卡龍色系", "category": "可愛療癒系", "img": "image-Q04.png" },
-            { "name": "韓系可愛插畫風", "category": "可愛療癒系", "img": "image-Q05.png" },
-            { "name": "水彩療癒風", "category": "可愛療癒系", "img": "image-Q06.png" },
-            { "name": "蠟筆塗鴉風", "category": "可愛療癒系", "img": "image-Q07.png" },
-            { "name": "棉花娃娃風", "category": "可愛療癒系", "img": "image-Q08.png" },
-            { "name": "小清新文青風", "category": "可愛療癒系", "img": "image-Q09.png" },
-            { "name": "日系KAWAII風", "category": "可愛療癒系", "img": "image-Q10.png" },
-            { "name": "日系淑女風", "category": "女生類別", "img": "image-girl01.jpg" },
-            { "name": "韓系辣妹風", "category": "女生類別", "img": "image-girl02.jpg" },
-            { "name": "典雅名媛風", "category": "女生類別", "img": "image-girl03.jpg" },
-            { "name": "文青藝術家風", "category": "女生類別", "img": "image-girl04.jpg" },
-            { "name": "職場菁英風", "category": "女生類別", "img": "image-girl05.jpg" },
-            { "name": "貴婦風", "category": "女生類別", "img": "image-girl06.jpg" },
-            { "name": "運動陽光風", "category": "女生類別", "img": "image-girl07.jpg" },
-            { "name": "校園青春風", "category": "女生類別", "img": "image-girl08.jpg" },
-            { "name": "公爵公主風", "category": "女生類別", "img": "image-girl09.jpg" },
-            { "name": "潮流街頭風", "category": "女生類別", "img": "image-girl10.jpg" },
-            { "name": "日系暖男風", "category": "男生類別", "img": "image-boy01.jpg" },
-            { "name": "韓系歐巴風", "category": "男生類別", "img": "image-boy02.jpg" },
-            { "name": "典雅紳士風", "category": "男生類別", "img": "image-boy03.jpg" },
-            { "name": "文青藝術家風", "category": "男生類別", "img": "image-boy04.jpg" },
-            { "name": "職場菁英風", "category": "男生類別", "img": "image-boy05.jpg" },
-            { "name": "霸總風", "category": "男生類別", "img": "image-boy06.jpg" },
-            { "name": "運動陽光風", "category": "男生類別", "img": "image-boy07.jpg" },
-            { "name": "校園青春風", "category": "男生類別", "img": "image-boy08.jpg" },
-            { "name": "公爵王子風", "category": "男生類別", "img": "image-boy09.jpg" },
-            { "name": "潮流街頭風", "category": "男生類別", "img": "image-boy10.jpg" }
-        ],
-        "template": "以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖畫板。\n\n基本規格：\n- 畫布尺寸：1480×1280 px。\n- 排版方式：4×4，共 16 格。\n- 每格尺寸固定為 370×320 px。\n- 16 張貼圖需從左到右、從上到下排列。\n- 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子2px。\n\n角色一致性：\n- 每一格都是同一角色的不同表情、動作或日常情境。\n- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。\n- 不要讓角色在不同格子中變成不同角色。\n- 角色畫風：{artStyle}\n- 角色風格：{subStyle}\n\n背景與畫面限制：\n- 背景顏色使用色碼{bgColor}\n- 文字顏色使用色碼{textColor}\n- 不要發光效果。\n- 不要陰影光暈。\n\n16 句日常台詞內容：\n{linesText}"
-    };
+    let config = { artStyles: [], subStyles: [], template: "" };
+    let currentSha = ""; // GitHub API 修改需要 SHA
 
-    function getConfig() {
-        const stored = localStorage.getItem('sticker_generator_config');
-        if (stored) {
-            try { return JSON.parse(stored); } catch(e) { return defaultData; }
-        }
-        return defaultData;
+    // 載入本地存儲的 GitHub Token 設定
+    function loadGHSettings() {
+        document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+        document.getElementById('ghBranch').value = localStorage.getItem('gh_branch') || 'main';
+        document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
     }
 
-    let config = getConfig();
+    function saveGHSettings() {
+        localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
+        localStorage.setItem('gh_branch', document.getElementById('ghBranch').value.trim() || 'main');
+        localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+    }
+
+    // 透過 GitHub API 讀取最新的 data.json
+    async function loadDataFromGitHub() {
+        loadGHSettings();
+        const repo = document.getElementById('ghRepo').value;
+        const branch = document.getElementById('ghBranch').value;
+        const token = document.getElementById('ghToken').value;
+
+        if (!repo) {
+            // 若未填寫 API，預設嘗試直接 Fetch 同目錄下的 data.json
+            try {
+                const res = await fetch(`data.json?t=${Date.now()}`);
+                config = await res.json();
+                renderUI();
+            } catch(e){}
+            return;
+        }
+
+        try {
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/data.json?ref=${branch}`, { headers });
+            if (res.ok) {
+                const fileData = await res.json();
+                currentSha = fileData.sha;
+                // 解碼 Base64
+                const content = decodeURIComponent(escape(atob(fileData.content)));
+                config = JSON.parse(content);
+                renderUI();
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
 
     function renderUI() {
         // 渲染畫風
         const artContainer = document.getElementById('artStylesList');
         artContainer.innerHTML = '';
-        config.artStyles.forEach((item, index) => {
+        (config.artStyles || []).forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'item-row';
             div.innerHTML = `
@@ -155,7 +154,7 @@
         // 渲染風格
         const subContainer = document.getElementById('subStylesList');
         subContainer.innerHTML = '';
-        config.subStyles.forEach((item, index) => {
+        (config.subStyles || []).forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'item-row';
             div.innerHTML = `
@@ -171,11 +170,11 @@
             subContainer.appendChild(div);
         });
 
-        // 渲染 Template
-        document.getElementById('templateInput').value = config.template || defaultData.template;
+        document.getElementById('templateInput').value = config.template || '';
     }
 
     function addArtStyle() {
+        if (!config.artStyles) config.artStyles = [];
         config.artStyles.push({ name: "新畫風", img: "" });
         renderUI();
     }
@@ -186,6 +185,7 @@
     }
 
     function addSubStyle() {
+        if (!config.subStyles) config.subStyles = [];
         config.subStyles.push({ name: "新風格", category: "可愛療癒系", img: "" });
         renderUI();
     }
@@ -195,25 +195,59 @@
         renderUI();
     }
 
-    function saveConfig() {
+    // 將資料打包並 commit 至 GitHub
+    async function saveAndPushToGitHub() {
+        saveGHSettings();
+
+        const repo = document.getElementById('ghRepo').value;
+        const branch = document.getElementById('ghBranch').value;
+        const token = document.getElementById('ghToken').value;
+
+        if (!repo || !token) {
+            alert('請填寫 GitHub Repo 與 Personal Access Token (PAT) 才能進行自動同步！');
+            return;
+        }
+
         config.template = document.getElementById('templateInput').value;
-        localStorage.setItem('sticker_generator_config', JSON.stringify(config));
-        alert('✅ 儲存成功！(本機已更新)');
+
+        // 轉 Base64
+        const contentJson = JSON.stringify(config, null, 4);
+        const encodedContent = btoa(unescape(encodeURIComponent(contentJson)));
+
+        const payload = {
+            message: "Update data.json via Admin Panel",
+            content: encodedContent,
+            branch: branch
+        };
+
+        if (currentSha) {
+            payload.sha = currentSha;
+        }
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/data.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const resData = await res.json();
+                currentSha = resData.content.sha;
+                alert('🚀 成功同步更新至 GitHub！前台網頁已同步最新內容。');
+            } else {
+                const err = await res.json();
+                alert(`更新失敗：${err.message}`);
+            }
+        } catch(e) {
+            alert('連線失敗，請檢查網路或 Token 設定。');
+        }
     }
 
-    // 複製程式碼時，整段替換全域變數
-    function exportCodeForGitHub() {
-        config.template = document.getElementById('templateInput').value;
-        const codeString = `const defaultData = ${JSON.stringify(config, null, 4)};`;
-        
-        navigator.clipboard.writeText(codeString).then(() => {
-            alert('📋 已成功複製 GitHub 全域程式碼！\n請開啟 GitHub 上的 HTML 檔案，選取整段 const defaultData 區塊並覆蓋貼上！');
-        }).catch(() => {
-            prompt('請手動複製下方代碼並貼回 GitHub 檔案：', codeString);
-        });
-    }
-
-    renderUI();
+    loadDataFromGitHub();
 </script>
 </body>
 </html>
