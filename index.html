@@ -75,7 +75,7 @@
             <label>背景色碼</label>
             <div class="color-input-wrapper">
                 <div id="bgColorPicker"></div>
-                <input type="text" id="bgColorCode" class="color-code-input" value="#E800E8" oninput="updatePickrFromInput('bg', this.value)">
+                <input type="text" id="bgColorCode" class="color-code-input" value="#49FF07" oninput="updatePickrFromInput('bg', this.value)">
             </div>
         </div>
         <div class="form-group">
@@ -187,7 +187,7 @@
             }
         };
 
-        bgPickr = Pickr.create({ el: '#bgColorPicker', default: '#E800E8', ...pickrConfig });
+        bgPickr = Pickr.create({ el: '#bgColorPicker', default: '#49FF07', ...pickrConfig });
         textPickr = Pickr.create({ el: '#textColorPicker', default: '#424200', ...pickrConfig });
 
         bgPickr.on('change', (color) => {
