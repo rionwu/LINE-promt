@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 貼圖 Prompt 生成器</title>
-    
-    <!-- 引入 Pickr 顏色選擇器樣式 (Nano 風格) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css"/>
 
     <style>
@@ -23,23 +21,19 @@
         body { background-color: var(--bg-gray); color: var(--text-main); padding: 40px 20px; }
         .container { max-width: 800px; margin: 0 auto; }
 
-        /* Header */
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; color: #111827; }
         .header p { color: var(--text-sub); font-size: 0.95rem; }
 
-        /* Color Inputs */
         .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .form-group label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
         .color-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; padding: 6px 10px; }
         
-        /* Pickr 按鈕樣式覆蓋 */
         .pickr { margin-right: 10px; }
         .pickr .pcr-button { width: 32px !important; height: 32px !important; border-radius: 6px !important; }
         
         .color-code-input { border: none; outline: none; width: 100%; font-size: 0.95rem; text-transform: uppercase; font-family: monospace; }
 
-        /* Style Selection Grid */
         .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; font-size: 0.95rem; outline: none; cursor: pointer; }
         
@@ -51,7 +45,6 @@
         .preview-card img { width: 100%; height: 260px; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
         .preview-card p { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
 
-        /* 16 Lines Section */
         .lines-section { margin-bottom: 30px; }
         .lines-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
         .preset-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -62,12 +55,10 @@
         .line-item label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; font-weight: 600; }
         .line-item input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; font-size: 0.9rem; outline: none; }
 
-        /* Action Button */
         .action-btn-wrapper { text-align: center; margin: 30px 0; }
         .btn-copy { background: var(--primary-green); color: white; border: none; padding: 12px 32px; font-size: 1.05rem; font-weight: 700; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: background 0.2s; }
         .btn-copy:hover { background: var(--primary-green-hover); }
 
-        /* Output Card */
         .output-card { background: #f1f5f9; border-radius: 12px; padding: 20px; margin-top: 20px; border: 1px solid var(--border-color); }
         .output-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
         textarea { width: 100%; height: 260px; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 0.85rem; font-family: monospace; background: #fff; resize: vertical; line-height: 1.5; outline: none; }
@@ -83,7 +74,6 @@
         <p>自訂背景色、文字顏色、畫風、風格和 16 句台詞，一鍵生成完整的 AI 貼圖製作提示詞</p>
     </div>
 
-    <!-- 配色設定 (使用 Pickr 套件) -->
     <div class="color-grid">
         <div class="form-group">
             <label>背景色碼</label>
@@ -101,9 +91,7 @@
         </div>
     </div>
 
-    <!-- 畫風與風格選擇 -->
     <div class="selection-grid">
-        <!-- 左側：畫風 -->
         <div>
             <div class="form-group">
                 <label>畫風</label>
@@ -115,7 +103,6 @@
             </div>
         </div>
 
-        <!-- 右側：風格 -->
         <div>
             <div class="form-group">
                 <label>風格</label>
@@ -133,7 +120,6 @@
         </div>
     </div>
 
-    <!-- 16 句日常台詞 -->
     <div class="lines-section">
         <div class="lines-header">16 句日常台詞</div>
         <div class="preset-buttons">
@@ -147,12 +133,10 @@
         <div class="inputs-16-grid" id="inputs16Container"></div>
     </div>
 
-    <!-- 複製按鈕 -->
     <div class="action-btn-wrapper">
         <button class="btn-copy" onclick="copyAndGenerate()">📋 複製 Prompt</button>
     </div>
 
-    <!-- 預覽 Prompt -->
     <div class="output-card">
         <h3>預覽 Prompt</h3>
         <textarea id="promptOutput" readonly></textarea>
@@ -163,10 +147,10 @@
     </div>
 </div>
 
-<!-- 引入 Pickr 顏色選擇器 JS -->
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 
 <script>
+    // 全域預設資料區塊（從後台複製出來的程式碼貼在這裡）
     const defaultData = {
         artStyles: [
             { name: "水墨風", img: "image-print01.jpg" },
@@ -184,34 +168,8 @@
         subStyles: [
             { name: "可愛療癒 01", category: "可愛療癒系", img: "image-Q01.png" },
             { name: "可愛療癒 02", category: "可愛療癒系", img: "image-Q02.png" },
-            { name: "可愛療癒 03", category: "可愛療癒系", img: "image-Q03.png" },
-            { name: "可愛療癒 04", category: "可愛療癒系", img: "image-Q04.png" },
-            { name: "可愛療癒 05", category: "可愛療癒系", img: "image-Q05.png" },
-            { name: "可愛療癒 06", category: "可愛療癒系", img: "image-Q06.png" },
-            { name: "可愛療癒 07", category: "可愛療癒系", img: "image-Q07.png" },
-            { name: "可愛療癒 08", category: "可愛療癒系", img: "image-Q08.png" },
-            { name: "可愛療癒 09", category: "可愛療癒系", img: "image-Q09.png" },
-            { name: "可愛療癒 10", category: "可愛療癒系", img: "image-Q10.png" },
             { name: "女生風格 01", category: "女生類別", img: "image-girl01.jpg" },
-            { name: "女生風格 02", category: "女生類別", img: "image-girl02.jpg" },
-            { name: "女生風格 03", category: "女生類別", img: "image-girl03.jpg" },
-            { name: "女生風格 04", category: "女生類別", img: "image-girl04.jpg" },
-            { name: "女生風格 05", category: "女生類別", img: "image-girl05.jpg" },
-            { name: "女生風格 06", category: "女生類別", img: "image-girl06.jpg" },
-            { name: "女生風格 07", category: "女生類別", img: "image-girl07.jpg" },
-            { name: "女生風格 08", category: "女生類別", img: "image-girl08.jpg" },
-            { name: "女生風格 09", category: "女生類別", img: "image-girl09.jpg" },
-            { name: "女生風格 10", category: "女生類別", img: "image-girl10.jpg" },
-            { name: "男生風格 01", category: "男生類別", img: "image-boy01.jpg" },
-            { name: "男生風格 02", category: "男生類別", img: "image-boy02.jpg" },
-            { name: "男生風格 03", category: "男生類別", img: "image-boy03.jpg" },
-            { name: "男生風格 04", category: "男生類別", img: "image-boy04.jpg" },
-            { name: "男生風格 05", category: "男生類別", img: "image-boy05.jpg" },
-            { name: "男生風格 06", category: "男生類別", img: "image-boy06.jpg" },
-            { name: "男生風格 07", category: "男生類別", img: "image-boy07.jpg" },
-            { name: "男生風格 08", category: "男生類別", img: "image-boy08.jpg" },
-            { name: "男生風格 09", category: "男生類別", img: "image-boy09.jpg" },
-            { name: "男生風格 10", category: "男生類別", img: "image-boy10.jpg" }
+            { name: "男生風格 01", category: "男生類別", img: "image-boy01.jpg" }
         ],
         template: `以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖畫板。
 
@@ -255,12 +213,10 @@
         return defaultData;
     }
 
-    // 將 config 改為可變動全域變數，方便完整覆蓋
     let config = getConfig();
     let currentCategory = '可愛療癒系';
     let bgPickr, textPickr;
 
-    // 檢測並跳出 LINE 內建瀏覽器
     function checkAndOpenExternalBrowser() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isLine = ua.indexOf('Line') > -1 || ua.indexOf('LINE') > -1;
@@ -279,27 +235,19 @@
         }
     }
 
-    // 重新讀取並完全覆蓋 config 資料
     function reloadConfigAndUI() {
-        config = getConfig(); // 直接替換整個物件
+        config = getConfig();
         loadArtStyles();
         loadSubStyles();
         buildPrompt();
     }
 
-    // 監聽後台對 LocalStorage 的變更
     window.addEventListener('storage', (event) => {
-        if (event.key === 'sticker_generator_config') {
-            reloadConfigAndUI();
-        }
+        if (event.key === 'sticker_generator_config') reloadConfigAndUI();
     });
 
-    // 分頁切換回前台時自動重新載入
-    window.addEventListener('focus', () => {
-        reloadConfigAndUI();
-    });
+    window.addEventListener('focus', () => reloadConfigAndUI());
 
-    // 頁面初始化
     function init() {
         checkAndOpenExternalBrowser();
         initPickr();
@@ -309,44 +257,25 @@
         applyPreset('daily');
     }
 
-    // 初始化第三方 Pickr 色盤
     function initPickr() {
         const pickrConfig = {
             theme: 'nano',
             components: {
-                preview: true,
-                opacity: false,
-                hue: true,
-                interaction: {
-                    hex: true,
-                    input: true,
-                    clear: false,
-                    save: true
-                }
+                preview: true, opacity: false, hue: true,
+                interaction: { hex: true, input: true, clear: false, save: true }
             }
         };
 
-        bgPickr = Pickr.create({
-            el: '#bgColorPicker',
-            default: '#E800E8',
-            ...pickrConfig
-        });
-
-        textPickr = Pickr.create({
-            el: '#textColorPicker',
-            default: '#424200',
-            ...pickrConfig
-        });
+        bgPickr = Pickr.create({ el: '#bgColorPicker', default: '#E800E8', ...pickrConfig });
+        textPickr = Pickr.create({ el: '#textColorPicker', default: '#424200', ...pickrConfig });
 
         bgPickr.on('change', (color) => {
-            const hex = color.toHEXA().toString();
-            document.getElementById('bgColorCode').value = hex;
+            document.getElementById('bgColorCode').value = color.toHEXA().toString();
             buildPrompt();
         });
 
         textPickr.on('change', (color) => {
-            const hex = color.toHEXA().toString();
-            document.getElementById('textColorCode').value = hex;
+            document.getElementById('textColorCode').value = color.toHEXA().toString();
             buildPrompt();
         });
     }
@@ -365,10 +294,7 @@
         for (let i = 1; i <= 16; i++) {
             const div = document.createElement('div');
             div.className = 'line-item';
-            div.innerHTML = `
-                <label>台詞 ${i}</label>
-                <input type="text" id="line_${i}" oninput="buildPrompt()">
-            `;
+            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line_${i}" oninput="buildPrompt()">`;
             container.appendChild(div);
         }
     }
@@ -479,9 +405,7 @@
         });
     }
 
-    // 啟動頁面
     init();
 </script>
-
 </body>
 </html>
