@@ -20,6 +20,17 @@
         body { background-color: var(--bg-gray); color: var(--text-main); padding: 40px 20px; }
         .container { max-width: 800px; margin: 0 auto; }
 
+        /* ---- 頁籤切換 ---- */
+        .nav-tabs { display: flex; gap: 10px; max-width: 800px; margin: 0 auto 24px; }
+        .nav-btn {
+            flex: 1; padding: 12px 0; border: none; border-radius: 10px;
+            background: #fff; color: var(--text-sub); font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; border: 1px solid var(--border-color); transition: 0.15s;
+        }
+        .nav-btn.active { background: var(--primary-green); color: #fff; border-color: var(--primary-green); }
+        .page { display: none; }
+        .page.active { display: block; }
+
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; }
         .header p { color: var(--text-sub); font-size: 0.95rem; }
@@ -27,14 +38,18 @@
         .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .form-group label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
         .color-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; padding: 6px 10px; }
-        
+
         .pickr { margin-right: 10px; }
         .pickr .pcr-button { width: 32px !important; height: 32px !important; border-radius: 6px !important; }
         .color-code-input { border: none; outline: none; width: 100%; font-size: 0.95rem; text-transform: uppercase; font-family: monospace; }
 
+        .fixed-color-box { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; padding: 10px 12px; }
+        .fixed-color-swatch { width: 32px; height: 32px; border-radius: 6px; background: #000000; border: 1px solid var(--border-color); flex-shrink: 0; }
+        .fixed-color-box span { font-family: monospace; font-size: 0.95rem; color: var(--text-sub); }
+
         .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; font-size: 0.95rem; outline: none; cursor: pointer; }
-        
+
         .cat-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
         .tab-btn { flex: 1; padding: 6px 0; border: none; background: #edf2f7; border-radius: 6px; color: var(--text-sub); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
         .tab-btn.active { background: var(--primary-green); color: white; }
@@ -42,6 +57,12 @@
         .preview-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; background: #fff; text-align: center; margin-top: 10px; }
         .preview-card img { width: 100%; height: 260px; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
         .preview-card p { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
+
+        .custom-art-wrapper { margin-top: 10px; }
+        .custom-art-wrapper input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+            background: #fff; font-size: 0.9rem; outline: none;
+        }
 
         .lines-section { margin-bottom: 30px; }
         .lines-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
@@ -64,7 +85,15 @@
 </head>
 <body>
 
-<div class="container">
+<div class="nav-tabs">
+    <button class="nav-btn active" id="navBtn-page1" onclick="switchPage('page1')">🧷 靜態貼圖 Prompt 生成器</button>
+    <button class="nav-btn" id="navBtn-page2" onclick="switchPage('page2')">🎬 動態貼圖 Prompt 生成器</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 1：原本的「AI 貼圖 Prompt 生成器」（未變更）                  -->
+<!-- ============================================================ -->
+<div class="container page active" id="page1">
     <div class="header">
         <h1>AI 貼圖 Prompt 生成器</h1>
         <p>自訂背景色、文字顏色、畫風、風格和 16 句台詞，一鍵生成完整的 AI 貼圖製作提示詞</p>
@@ -143,12 +172,81 @@
     </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- PAGE 2：新增「動態貼圖 Prompt」                                   -->
+<!-- ============================================================ -->
+<div class="container page" id="page2">
+    <div class="header">
+        <h1>動態貼圖 Prompt 生成器</h1>
+        <p>畫風可自訂、文字顏色可調整、8 句常用台詞，一鍵生成 4×2（8 格）動態貼圖製作提示詞</p>
+    </div>
+
+    <div class="color-grid">
+        <div class="form-group">
+            <label>背景色（固定）</label>
+            <div class="fixed-color-box">
+                <div class="fixed-color-swatch"></div>
+                <span>#000000（去背用途，不可調整）</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>文字色碼</label>
+            <div class="color-input-wrapper">
+                <div id="text2ColorPicker"></div>
+                <input type="text" id="text2ColorCode" class="color-code-input" value="#424200" oninput="updatePickrFromInput2(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 30px;">
+        <label>畫風</label>
+        <select id="artStyleSelect2" onchange="updateArtPreview2()"></select>
+
+        <div class="custom-art-wrapper" id="customArtWrapper2" style="display:none;">
+            <input type="text" id="customArtInput2" placeholder="請輸入自訂畫風描述，例如：日系水彩插畫風、3D Q版黏土風…" oninput="buildPrompt2()">
+        </div>
+
+        <div class="preview-card" id="artPreviewCard2">
+            <img id="artPreviewImg2" src="" alt="畫風預覽">
+            <p id="artPreviewName2"></p>
+        </div>
+    </div>
+
+    <div class="lines-section">
+        <div class="lines-header">8 句常用台詞</div>
+        <div class="preset-buttons">
+            <button class="preset-btn" onclick="applyPreset2('sweet')">甜蜜情侶</button>
+            <button class="preset-btn" onclick="applyPreset2('daily')">日常碎碎唸</button>
+            <button class="preset-btn" onclick="applyPreset2('work')">職場小姐</button>
+            <button class="preset-btn" onclick="applyPreset2('heal')">療癒系</button>
+            <button class="preset-btn" onclick="applyPreset2('funny')">搞笑逗趣</button>
+        </div>
+
+        <div class="inputs-16-grid" id="inputs8Container"></div>
+    </div>
+
+    <div class="action-btn-wrapper">
+        <button class="btn-copy" onclick="copyAndGenerate2()">📋 複製 Prompt</button>
+    </div>
+
+    <div class="output-card">
+        <h3>預覽 Prompt</h3>
+        <textarea id="promptOutput2" readonly></textarea>
+    </div>
+
+    <div class="footer">
+        © 2026 StickerFaster. All rights reserved.
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 
 <script>
     let config = { artStyles: [], subStyles: [], template: "" };
     let currentCategory = '可愛療癒系';
-    let bgPickr, textPickr;
+    let bgPickr, textPickr, textPickr2;
+
+    const CUSTOM_ART_VALUE = '__custom__';
 
     const presets = {
         sweet: ["早安呀", "想你了", "愛你喔", "辛苦啦", "抱抱", "想吃什麼", "等下見", "親一個", "好想你", "晚安夢到我", "寶貝加油", "最喜歡你了", "收到！", "開心", "對不起嘛", "永遠愛你"],
@@ -158,23 +256,94 @@
         funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演", "登愣", "阿不就好棒棒", "差點吐血", "我就爛", "算你狠", "廢到笑", "驚不驚喜", "下去吧"]
     };
 
+    // 動態貼圖頁面使用同一組台詞的前 8 句
+    function presets8(key) {
+        return (presets[key] || []).slice(0, 8);
+    }
+
+    // 動態貼圖 Prompt 模板（4×2、8 格）
+    const template2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
+
+基本規格：
+- 畫布尺寸：16:9
+- 排版方式：4×2，共 8 格。
+- 8 張貼圖需從左到右、從上到下排列。
+- 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子5px。
+
+角色一致性：
+- 每一格都是同一角色的不同表情、動作或日常情境。
+- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。
+- 不要讓角色在不同格子中變成不同角色。
+- 角色畫風：{artStyle}
+
+背景與畫面限制：
+- 背景顏色使用去背PNG檔
+- 不要發光效果。
+- 不要陰影光暈。
+- 不要加入 Logo、浮水印、編號、格線或多餘裝飾。
+- 禁止畫分隔線，讓背景是完全的純色。
+
+去背用外輪廓要求：
+- 每一格角色都必須有清楚、深色、完整連續且閉合的外輪廓線。
+- 外輪廓必須方便後續去背辨識。
+- 耳朵、頭頂、臉部、手腳、尾巴、衣服與道具外緣都必須被線條完整包住。
+- 不能缺邊、斷線、漏邊或開口。
+- 即使是半身、近景或胸像構圖，角色可見的底部邊緣也必須自然封口，不能直接消失在白色背景中。
+- 人物的外框均需添加約 8px 的白色框線,不是對話框。
+
+文字要求：
+- 每格可以加入對應台詞文字。
+- 文字必須清楚、不要太小。
+- 文字必須完整位於該格內。
+- 文字不得跨格。
+- 文字不得被裁切。
+- 文字不得碰到畫布邊緣。
+- 文字顏色使用色碼{textColor}。
+- 確保文字在任何背景色都清晰易讀。
+- 不添加任何額外的標誌或浮水印。
+
+文字與角色距離：
+- 文字不得覆蓋、壓住、穿過、遮擋或切到角色本體。
+- 文字不得壓在線條上造成角色缺口。
+- 文字必須放在角色外部的空白區域。
+- 文字必須與角色外輪廓保持明顯距離。
+- 文字不能碰到耳朵、頭頂、臉、手、腳、尾巴、衣服、道具或任何外輪廓線。
+- 若空間不足，請縮小文字或調整角色位置，不能讓文字壓在角色身上。
+
+Text: everyday Chinese phrases, in a cute handwritten style with ink splash accents.，並設計每一格的表情、動作與文字： 
+
+請依照 4×2 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
+
+16 句日常台詞內容：
+{linesText}`;
+
     async function fetchConfig() {
         try {
-            // 加上時間戳記防快取
             const res = await fetch(`data.json?t=${Date.now()}`);
             config = await res.json();
             loadArtStyles();
             loadSubStyles();
+            loadArtStyles2();
             buildPrompt();
+            buildPrompt2();
         } catch (e) {
             alert('讀取 data.json 失敗，請確認檔案是否存在。');
         }
     }
 
+    function switchPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.getElementById('navBtn-' + id).classList.add('active');
+    }
+
     function init() {
         initPickr();
         render16Inputs();
+        render8Inputs();
         applyPreset('daily');
+        applyPreset2('daily');
         fetchConfig();
     }
 
@@ -189,6 +358,7 @@
 
         bgPickr = Pickr.create({ el: '#bgColorPicker', default: '#49FF07', ...pickrConfig });
         textPickr = Pickr.create({ el: '#textColorPicker', default: '#424200', ...pickrConfig });
+        textPickr2 = Pickr.create({ el: '#text2ColorPicker', default: '#424200', ...pickrConfig });
 
         bgPickr.on('change', (color) => {
             document.getElementById('bgColorCode').value = color.toHEXA().toString();
@@ -198,6 +368,11 @@
         textPickr.on('change', (color) => {
             document.getElementById('textColorCode').value = color.toHEXA().toString();
             buildPrompt();
+        });
+
+        textPickr2.on('change', (color) => {
+            document.getElementById('text2ColorCode').value = color.toHEXA().toString();
+            buildPrompt2();
         });
     }
 
@@ -209,6 +384,13 @@
         buildPrompt();
     }
 
+    function updatePickrFromInput2(val) {
+        if (/^#[0-9A-F]{6}$/i.test(val) && textPickr2) {
+            textPickr2.setColor(val);
+        }
+        buildPrompt2();
+    }
+
     function render16Inputs() {
         const container = document.getElementById('inputs16Container');
         container.innerHTML = '';
@@ -216,6 +398,17 @@
             const div = document.createElement('div');
             div.className = 'line-item';
             div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line_${i}" oninput="buildPrompt()">`;
+            container.appendChild(div);
+        }
+    }
+
+    function render8Inputs() {
+        const container = document.getElementById('inputs8Container');
+        container.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const div = document.createElement('div');
+            div.className = 'line-item';
+            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="buildPrompt2()">`;
             container.appendChild(div);
         }
     }
@@ -243,9 +436,47 @@
         buildPrompt();
     }
 
+    // ---- 畫風（含「自訂」選項）：動態貼圖頁面 ----
+    function loadArtStyles2() {
+        const select = document.getElementById('artStyleSelect2');
+        select.innerHTML = '';
+        (config.artStyles || []).forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.name;
+            opt.dataset.img = item.img;
+            opt.textContent = item.name;
+            select.appendChild(opt);
+        });
+        const customOpt = document.createElement('option');
+        customOpt.value = CUSTOM_ART_VALUE;
+        customOpt.textContent = '✏️ 自訂畫風…';
+        select.appendChild(customOpt);
+        updateArtPreview2();
+    }
+
+    function updateArtPreview2() {
+        const select = document.getElementById('artStyleSelect2');
+        const wrapper = document.getElementById('customArtWrapper2');
+        const previewCard = document.getElementById('artPreviewCard2');
+
+        if (select.value === CUSTOM_ART_VALUE) {
+            wrapper.style.display = 'block';
+            previewCard.style.display = 'none';
+        } else {
+            wrapper.style.display = 'none';
+            previewCard.style.display = 'block';
+            const selectedOpt = select.options[select.selectedIndex];
+            if (selectedOpt) {
+                document.getElementById('artPreviewImg2').src = selectedOpt.dataset.img || '';
+                document.getElementById('artPreviewName2').textContent = selectedOpt.value;
+            }
+        }
+        buildPrompt2();
+    }
+
     function switchCategory(cat, btn) {
         currentCategory = cat;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#page1 .tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         loadSubStyles();
     }
@@ -254,7 +485,7 @@
         const select = document.getElementById('subStyleSelect');
         select.innerHTML = '';
         const filtered = (config.subStyles || []).filter(s => s.category === currentCategory || !s.category);
-        
+
         filtered.forEach(item => {
             const opt = document.createElement('option');
             opt.value = item.name;
@@ -288,6 +519,16 @@
         }
     }
 
+    function applyPreset2(key) {
+        const list = presets8(key);
+        if (list) {
+            for (let i = 1; i <= 8; i++) {
+                document.getElementById(`line2_${i}`).value = list[i - 1] || '';
+            }
+            buildPrompt2();
+        }
+    }
+
     function buildPrompt() {
         const bg = document.getElementById('bgColorCode').value;
         const textClr = document.getElementById('textColorCode').value;
@@ -310,8 +551,41 @@
         document.getElementById('promptOutput').value = res;
     }
 
+    // ---- 動態貼圖 Prompt 組裝 ----
+    function buildPrompt2() {
+        const textClr = document.getElementById('text2ColorCode').value;
+        const select = document.getElementById('artStyleSelect2');
+        let art;
+        if (select.value === CUSTOM_ART_VALUE) {
+            art = document.getElementById('customArtInput2').value || '（尚未輸入自訂畫風）';
+        } else {
+            art = select.value || '未選擇';
+        }
+
+        let linesList = [];
+        for (let i = 1; i <= 8; i++) {
+            const val = document.getElementById(`line2_${i}`).value || '';
+            linesList.push(`${i}. ${val}`);
+        }
+
+        let res = template2;
+        res = res.replace(/{artStyle}/g, art);
+        res = res.replace(/{textColor}/g, textClr);
+        res = res.replace(/{linesText}/g, linesList.join('\n'));
+
+        document.getElementById('promptOutput2').value = res;
+    }
+
     function copyAndGenerate() {
         const textarea = document.getElementById('promptOutput');
+        textarea.select();
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            alert('📋 已成功複製 Prompt 提示詞！');
+        });
+    }
+
+    function copyAndGenerate2() {
+        const textarea = document.getElementById('promptOutput2');
         textarea.select();
         navigator.clipboard.writeText(textarea.value).then(() => {
             alert('📋 已成功複製 Prompt 提示詞！');
