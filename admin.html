@@ -32,6 +32,7 @@
 
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card h2 { font-size: 1.2rem; margin-bottom: 16px; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .card .card-desc { font-size: 0.82rem; color: var(--text-sub); margin: -8px 0 16px; }
 
         .github-config { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px; }
         .github-config input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
@@ -44,6 +45,12 @@
         .item-row select { flex: 1.5; }
 
         textarea.template-box { width: 100%; height: 200px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: monospace; font-size: 0.85rem; outline: none; line-height: 1.5; }
+
+        /* 動態貼圖 - 8 句台詞預設值編輯 */
+        .preset2-group { margin-bottom: 20px; }
+        .preset2-group h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+        .preset2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+        .preset2-grid input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.88rem; }
     </style>
 </head>
 <body>
@@ -68,6 +75,7 @@
     <!-- 畫風管理 -->
     <div class="card">
         <h2>2. 畫風管理 (Art Styles)</h2>
+        <p class="card-desc">這裡的畫風清單同時提供給「靜態貼圖」與「動態貼圖」兩個前台頁面使用。</p>
         <div id="artStylesList" class="item-list"></div>
         <button class="btn btn-primary" onclick="addArtStyle()">+ 新增畫風</button>
     </div>
@@ -75,20 +83,109 @@
     <!-- 風格管理 -->
     <div class="card">
         <h2>3. 風格管理 (Sub Styles)</h2>
+        <p class="card-desc">僅供「靜態貼圖」頁面使用；動態貼圖頁面沒有風格選項。</p>
         <div id="subStylesList" class="item-list"></div>
         <button class="btn btn-primary" onclick="addSubStyle()">+ 新增風格</button>
     </div>
 
     <!-- Prompt 模板設定 -->
     <div class="card">
-        <h2>4. Prompt 模板設定</h2>
+        <h2>4. 靜態貼圖 Prompt 模板設定</h2>
         <textarea id="templateInput" class="template-box"></textarea>
+    </div>
+
+    <!-- 動態貼圖 Prompt 模板設定 -->
+    <div class="card">
+        <h2>5. 動態貼圖 Prompt 模板設定</h2>
+        <p class="card-desc">可使用 {artStyle}、{textColor}、{linesText} 三個變數，會自動代入前台使用者填寫的內容。</p>
+        <textarea id="template2Input" class="template-box" style="height: 320px;"></textarea>
+    </div>
+
+    <!-- 動態貼圖 - 8 句常用台詞管理 -->
+    <div class="card">
+        <h2>6. 動態貼圖 - 8句常用台詞管理</h2>
+        <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 8 句台詞。</p>
+        <div id="presets2Container"></div>
     </div>
 </div>
 
 <script>
-    let config = { artStyles: [], subStyles: [], template: "" };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", presets2: {} };
     let currentSha = ""; // GitHub API 修改需要 SHA
+
+    // 動態貼圖 8 句台詞的預設分類（key 對應前台 applyPreset2 的參數）
+    const preset2Meta = [
+        { key: 'sweet', label: '甜蜜情侶' },
+        { key: 'daily', label: '日常碎碎唸' },
+        { key: 'work',  label: '職場小姐' },
+        { key: 'heal',  label: '療癒系' },
+        { key: 'funny', label: '搞笑逗趣' }
+    ];
+
+    // 若 data.json 尚未包含 presets2，先用這組預設值帶入，方便後台直接編輯
+    const defaultPresets2 = {
+        sweet: ["早安呀", "想你了", "愛你喔", "辛苦啦", "抱抱", "想吃什麼", "等下見", "親一個"],
+        daily: ["早安", "辛苦了", "謝謝你", "OK!", "+1", "收到", "哈哈", "拜託了"],
+        work:  ["收到", "辛苦了", "收到謝謝", "好的沒問題", "確認中", "開會中", "稍後回覆", "加油"],
+        heal:  ["加油喔", "隨時都在", "沒關係的", "放輕鬆", "今天也很棒", "休息一下吧", "辛苦你了", "拍拍"],
+        funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演"]
+    };
+
+    // 動態貼圖 Prompt 預設模板（若 data.json 尚未包含 template2 時使用）
+    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
+
+基本規格：
+- 畫布尺寸：16:9
+- 排版方式：4×2，共 8 格。
+- 8 張貼圖需從左到右、從上到下排列。
+- 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子5px。
+
+角色一致性：
+- 每一格都是同一角色的不同表情、動作或日常情境。
+- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。
+- 不要讓角色在不同格子中變成不同角色。
+- 角色畫風：{artStyle}
+
+背景與畫面限制：
+- 背景顏色使用去背PNG檔
+- 不要發光效果。
+- 不要陰影光暈。
+- 不要加入 Logo、浮水印、編號、格線或多餘裝飾。
+- 禁止畫分隔線，讓背景是完全的純色。
+
+去背用外輪廓要求：
+- 每一格角色都必須有清楚、深色、完整連續且閉合的外輪廓線。
+- 外輪廓必須方便後續去背辨識。
+- 耳朵、頭頂、臉部、手腳、尾巴、衣服與道具外緣都必須被線條完整包住。
+- 不能缺邊、斷線、漏邊或開口。
+- 即使是半身、近景或胸像構圖，角色可見的底部邊緣也必須自然封口，不能直接消失在白色背景中。
+- 人物的外框均需添加約 8px 的白色框線,不是對話框。
+
+文字要求：
+- 每格可以加入對應台詞文字。
+- 文字必須清楚、不要太小。
+- 文字必須完整位於該格內。
+- 文字不得跨格。
+- 文字不得被裁切。
+- 文字不得碰到畫布邊緣。
+- 文字顏色使用色碼{textColor}。
+- 確保文字在任何背景色都清晰易讀。
+- 不添加任何額外的標誌或浮水印。
+
+文字與角色距離：
+- 文字不得覆蓋、壓住、穿過、遮擋或切到角色本體。
+- 文字不得壓在線條上造成角色缺口。
+- 文字必須放在角色外部的空白區域。
+- 文字必須與角色外輪廓保持明顯距離。
+- 文字不能碰到耳朵、頭頂、臉、手、腳、尾巴、衣服、道具或任何外輪廓線。
+- 若空間不足，請縮小文字或調整角色位置，不能讓文字壓在角色身上。
+
+Text: everyday Chinese phrases, in a cute handwritten style with ink splash accents.，並設計每一格的表情、動作與文字： 
+
+請依照 4×2 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
+
+16 句日常台詞內容：
+{linesText}`;
 
     // 載入本地存儲的 GitHub Token 設定
     function loadGHSettings() {
@@ -115,8 +212,12 @@
             try {
                 const res = await fetch(`data.json?t=${Date.now()}`);
                 config = await res.json();
+                normalizeConfig();
                 renderUI();
-            } catch(e){}
+            } catch(e){
+                normalizeConfig();
+                renderUI();
+            }
             return;
         }
 
@@ -129,11 +230,23 @@
                 // 解碼 Base64
                 const content = decodeURIComponent(escape(atob(fileData.content)));
                 config = JSON.parse(content);
+                normalizeConfig();
                 renderUI();
             }
         } catch(e) {
             console.error(e);
         }
+    }
+
+    // 補上舊版 data.json 可能缺少的欄位（template2 / presets2），確保後台可直接編輯
+    function normalizeConfig() {
+        if (!config.template2) config.template2 = defaultTemplate2;
+        if (!config.presets2) config.presets2 = {};
+        preset2Meta.forEach(({ key }) => {
+            if (!Array.isArray(config.presets2[key]) || config.presets2[key].length !== 8) {
+                config.presets2[key] = (defaultPresets2[key] || []).slice(0, 8);
+            }
+        });
     }
 
     function renderUI() {
@@ -171,6 +284,42 @@
         });
 
         document.getElementById('templateInput').value = config.template || '';
+        document.getElementById('template2Input').value = config.template2 || defaultTemplate2;
+
+        renderPresets2();
+    }
+
+    function renderPresets2() {
+        const container = document.getElementById('presets2Container');
+        container.innerHTML = '';
+
+        preset2Meta.forEach(({ key, label }) => {
+            const group = document.createElement('div');
+            group.className = 'preset2-group';
+
+            const title = document.createElement('h3');
+            title.textContent = `🔖 ${label}`;
+            group.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'preset2-grid';
+
+            const lines = config.presets2[key] || [];
+            for (let i = 0; i < 8; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `台詞 ${i + 1}`;
+                input.value = lines[i] || '';
+                input.addEventListener('change', () => {
+                    if (!Array.isArray(config.presets2[key])) config.presets2[key] = [];
+                    config.presets2[key][i] = input.value;
+                });
+                grid.appendChild(input);
+            }
+
+            group.appendChild(grid);
+            container.appendChild(group);
+        });
     }
 
     function addArtStyle() {
@@ -209,6 +358,7 @@
         }
 
         config.template = document.getElementById('templateInput').value;
+        config.template2 = document.getElementById('template2Input').value;
 
         // 轉 Base64
         const contentJson = JSON.stringify(config, null, 4);
