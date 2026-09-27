@@ -115,16 +115,23 @@
         <textarea id="template2bInput" class="template-box" style="height: 160px;"></textarea>
     </div>
 
+    <!-- 動態貼圖 - 動作影片 Prompt 模板設定 -->
+    <div class="card">
+        <h2>8. 動態貼圖 - 動作影片 Prompt 模板</h2>
+        <p class="card-desc">顯示在前台頁面最下方，並附有「動作內容」輸入欄位。請務必在模板中保留 {actions} 變數，前台使用者輸入的動作內容會取代這個變數。</p>
+        <textarea id="template2cInput" class="template-box" style="height: 260px;"></textarea>
+    </div>
+
     <!-- 動態貼圖 - 8 句常用台詞管理 -->
     <div class="card">
-        <h2>8. 動態貼圖 - 8句常用台詞管理</h2>
+        <h2>9. 動態貼圖 - 8句常用台詞管理</h2>
         <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 8 句台詞。</p>
         <div id="presets2Container"></div>
     </div>
 </div>
 
 <script>
-    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", presets2: {} };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", presets2: {} };
     let currentSha = ""; // GitHub API 修改需要 SHA
 
     // 動態貼圖 8 句台詞的預設分類（key 對應前台 applyPreset2 的參數）
@@ -144,6 +151,20 @@
         heal:  ["加油喔", "隨時都在", "沒關係的", "放輕鬆", "今天也很棒", "休息一下吧", "辛苦你了", "拍拍"],
         funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演"]
     };
+
+    // 動作影片 Prompt 預設模板（若 data.json 尚未包含 template2c 時使用）
+    // {actions} 會被使用者在前台「動作內容」欄位輸入的文字取代
+    const defaultTemplateC2 = `圖片為4X2的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
+角色需保持跟原本一致角色,維持角色的外觀、毛色、臉型、身型完全一致，禁止變成另一個角色、顏色禁止變色
+製作4X2共8個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在4X2各自獨立的格子內。
+文字需要完整保留，人物跟文字禁止重疊
+禁止一切運鏡行為，讓角色維持一定的大小
+有粗細清楚的貼圖輪廓
+背景使用#000000，不需要有其他任何的花紋出現
+8格獨立動畫影片動作不可以有重複、相似、一樣的情況出現，要嚴格執行提供的每個格子的動作指令
+格子順序由左至右、由上至下排列，左上第一格是01
+動作：
+{actions}`;
 
     // 三向圖 Prompt 預設模板（若 data.json 尚未包含 template2a 時使用）
     const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像，設計後提供我角色的三向圖，正面、側面、背面
@@ -267,6 +288,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         if (!config.template2) config.template2 = defaultTemplate2;
         if (!config.template2a) config.template2a = defaultTemplateA2;
         if (!config.template2b) config.template2b = defaultTemplateB2;
+        if (!config.template2c) config.template2c = defaultTemplateC2;
         if (!config.presets2) config.presets2 = {};
         preset2Meta.forEach(({ key }) => {
             if (!Array.isArray(config.presets2[key]) || config.presets2[key].length !== 8) {
@@ -313,6 +335,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         document.getElementById('template2aInput').value = config.template2a || defaultTemplateA2;
         document.getElementById('template2Input').value = config.template2 || defaultTemplate2;
         document.getElementById('template2bInput').value = config.template2b || defaultTemplateB2;
+        document.getElementById('template2cInput').value = config.template2c || defaultTemplateC2;
 
         renderPresets2();
     }
@@ -389,6 +412,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         config.template2a = document.getElementById('template2aInput').value;
         config.template2 = document.getElementById('template2Input').value;
         config.template2b = document.getElementById('template2bInput').value;
+        config.template2c = document.getElementById('template2cInput').value;
 
         // 轉 Base64
         const contentJson = JSON.stringify(config, null, 4);
