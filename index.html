@@ -203,12 +203,20 @@
         <select id="artStyleSelect2" onchange="updateArtPreview2()"></select>
 
         <div class="custom-art-wrapper" id="customArtWrapper2" style="display:none;">
-            <input type="text" id="customArtInput2" placeholder="請輸入自訂畫風描述，例如：日系水彩插畫風、3D Q版黏土風…" oninput="buildPrompt2()">
+            <input type="text" id="customArtInput2" placeholder="請輸入自訂畫風描述，例如：日系水彩插畫風、3D Q版黏土風…" oninput="buildAllPrompts2()">
         </div>
 
         <div class="preview-card" id="artPreviewCard2">
             <img id="artPreviewImg2" src="" alt="畫風預覽">
             <p id="artPreviewName2"></p>
+        </div>
+    </div>
+
+    <div class="output-card" style="margin-bottom: 30px;">
+        <h3>🧍 三向圖 Prompt（正面／側面／背面，會自動帶入上方畫風）</h3>
+        <textarea id="promptOutputA2" readonly style="height: 140px;"></textarea>
+        <div class="action-btn-wrapper" style="margin: 16px 0 0;">
+            <button class="btn-copy" onclick="copyGeneric('promptOutputA2')">📋 複製 Prompt</button>
         </div>
     </div>
 
@@ -232,6 +240,14 @@
     <div class="output-card">
         <h3>預覽 Prompt</h3>
         <textarea id="promptOutput2" readonly></textarea>
+    </div>
+
+    <div class="output-card" style="margin-top: 20px;">
+        <h3>🎬 動作表情 Prompt（分格動畫用）</h3>
+        <textarea id="promptOutputB2" readonly style="height: 180px;"></textarea>
+        <div class="action-btn-wrapper" style="margin: 16px 0 0;">
+            <button class="btn-copy" onclick="copyGeneric('promptOutputB2')">📋 複製 Prompt</button>
+        </div>
     </div>
 
     <div class="footer">
@@ -264,6 +280,16 @@
         }
         return (presets[key] || []).slice(0, 8);
     }
+
+    // 三向圖 Prompt（放在畫風下方）— 內建預設值，會被 data.json 的 config.template2a 覆蓋
+    const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像，設計後提供我角色的三向圖，正面、側面、背面
+
+角色畫風：{artStyle}`;
+
+    // 動作表情 Prompt（放在主要 Prompt 下方）— 內建預設值，會被 data.json 的 config.template2b 覆蓋
+    const defaultTemplateB2 = `為這張圖片裡的每一個角色設計6秒的動作表情，要做影片，給我每張圖片詳細的 prompt，表情不要一樣，完全不同的情境也可以。限制影片的變化都要在單獨的圖片框框內，不可以超出框框，動作要明顯，不要秒數，提供我動作順序的描述，提供規格如下：
+01：描述
+02：描述`;
 
     // 動態貼圖 Prompt 模板（4×2、8 格）— 內建預設值，會被 data.json 的 config.template2 覆蓋
     const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
@@ -329,7 +355,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             loadSubStyles();
             loadArtStyles2();
             buildPrompt();
-            buildPrompt2();
+            buildAllPrompts2();
         } catch (e) {
             alert('讀取 data.json 失敗，請確認檔案是否存在。');
         }
@@ -376,7 +402,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 
         textPickr2.on('change', (color) => {
             document.getElementById('text2ColorCode').value = color.toHEXA().toString();
-            buildPrompt2();
+            buildAllPrompts2();
         });
     }
 
@@ -392,7 +418,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         if (/^#[0-9A-F]{6}$/i.test(val) && textPickr2) {
             textPickr2.setColor(val);
         }
-        buildPrompt2();
+        buildAllPrompts2();
     }
 
     function render16Inputs() {
@@ -412,7 +438,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         for (let i = 1; i <= 8; i++) {
             const div = document.createElement('div');
             div.className = 'line-item';
-            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="buildPrompt2()">`;
+            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="buildAllPrompts2()">`;
             container.appendChild(div);
         }
     }
@@ -475,7 +501,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
                 document.getElementById('artPreviewName2').textContent = selectedOpt.value;
             }
         }
-        buildPrompt2();
+        buildAllPrompts2();
     }
 
     function switchCategory(cat, btn) {
@@ -529,7 +555,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             for (let i = 1; i <= 8; i++) {
                 document.getElementById(`line2_${i}`).value = list[i - 1] || '';
             }
-            buildPrompt2();
+            buildAllPrompts2();
         }
     }
 
@@ -555,16 +581,42 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         document.getElementById('promptOutput').value = res;
     }
 
-    // ---- 動態貼圖 Prompt 組裝 ----
+    // ---- 動態貼圖：取得目前選擇（或自訂輸入）的畫風文字，三段 prompt 共用 ----
+    function getArtStyleValue2() {
+        const select = document.getElementById('artStyleSelect2');
+        if (select.value === CUSTOM_ART_VALUE) {
+            return document.getElementById('customArtInput2').value || '（尚未輸入自訂畫風）';
+        }
+        return select.value || '未選擇';
+    }
+
+    // ---- 第一段：三向圖 Prompt（畫風下方、8 句常用台詞上方）----
+    function buildPromptA2() {
+        const art = getArtStyleValue2();
+        let res = config.template2a || defaultTemplateA2;
+        res = res.replace(/{artStyle}/g, art);
+        document.getElementById('promptOutputA2').value = res;
+    }
+
+    // ---- 第二段：動作表情 Prompt（主要 prompt 下方）----
+    function buildPromptB2() {
+        const art = getArtStyleValue2();
+        let res = config.template2b || defaultTemplateB2;
+        res = res.replace(/{artStyle}/g, art);
+        document.getElementById('promptOutputB2').value = res;
+    }
+
+    // ---- 動態貼圖頁面：一次重新組合三段 prompt ----
+    function buildAllPrompts2() {
+        buildPromptA2();
+        buildPrompt2();
+        buildPromptB2();
+    }
+
+    // ---- 動態貼圖 Prompt 組裝（主要 4×2 貼圖 prompt）----
     function buildPrompt2() {
         const textClr = document.getElementById('text2ColorCode').value;
-        const select = document.getElementById('artStyleSelect2');
-        let art;
-        if (select.value === CUSTOM_ART_VALUE) {
-            art = document.getElementById('customArtInput2').value || '（尚未輸入自訂畫風）';
-        } else {
-            art = select.value || '未選擇';
-        }
+        const art = getArtStyleValue2();
 
         let linesList = [];
         for (let i = 1; i <= 8; i++) {
@@ -589,7 +641,12 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
     }
 
     function copyAndGenerate2() {
-        const textarea = document.getElementById('promptOutput2');
+        copyGeneric('promptOutput2');
+    }
+
+    // 通用複製函式：用於三向圖 Prompt（promptOutputA2）與動作表情 Prompt（promptOutputB2）
+    function copyGeneric(elementId) {
+        const textarea = document.getElementById(elementId);
         textarea.select();
         navigator.clipboard.writeText(textarea.value).then(() => {
             alert('📋 已成功複製 Prompt 提示詞！');
