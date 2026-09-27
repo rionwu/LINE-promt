@@ -275,6 +275,19 @@
         </div>
     </div>
 
+    <div class="lines-section" style="margin-top: 30px;">
+        <div class="lines-header">🎞️ 動作內容（自行輸入 8 格動作，例如：01：張嘴大笑並揮手）</div>
+        <textarea id="actionsInput2" placeholder="請輸入每一格的動作指令，例如：&#10;01：張嘴大笑並揮手&#10;02：眨眼並比愛心&#10;03：...&#10;（由左至右、由上至下，左上第一格是 01）" style="width:100%; min-height:160px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:#fff; font-size:0.9rem; outline:none; resize:vertical; line-height:1.6;" oninput="buildPromptC2()"></textarea>
+    </div>
+
+    <div class="output-card" style="margin-top: 20px;">
+        <h3>🕺 動作影片 Prompt（4×2 動態貼圖用）</h3>
+        <textarea id="promptOutputC2" readonly style="height: 260px;"></textarea>
+        <div class="action-btn-wrapper" style="margin: 16px 0 0;">
+            <button class="btn-copy" onclick="copyGeneric('promptOutputC2')">📋 複製 Prompt</button>
+        </div>
+    </div>
+
     <div class="footer">
         © 2026 StickerFaster. All rights reserved.
     </div>
@@ -305,6 +318,20 @@
         }
         return (presets[key] || []).slice(0, 8);
     }
+
+    // 動作影片 Prompt（放在最下方）— 內建預設值，會被 data.json 的 config.template2c 覆蓋
+    // {actions} 會被使用者在「動作內容」欄位輸入的文字取代
+    const defaultTemplateC2 = `圖片為4X2的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
+角色需保持跟原本一致角色,維持角色的外觀、毛色、臉型、身型完全一致，禁止變成另一個角色、顏色禁止變色
+製作4X2共8個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在4X2各自獨立的格子內。
+文字需要完整保留，人物跟文字禁止重疊
+禁止一切運鏡行為，讓角色維持一定的大小
+有粗細清楚的貼圖輪廓
+背景使用#000000，不需要有其他任何的花紋出現
+8格獨立動畫影片動作不可以有重複、相似、一樣的情況出現，要嚴格執行提供的每個格子的動作指令
+格子順序由左至右、由上至下排列，左上第一格是01
+動作：
+{actions}`;
 
     // 三向圖 Prompt（放在畫風下方）— 內建預設值，會被 data.json 的 config.template2a 覆蓋
     const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像，設計後提供我角色的三向圖，正面、側面、背面
@@ -631,11 +658,20 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         document.getElementById('promptOutputB2').value = res;
     }
 
-    // ---- 動態貼圖頁面：一次重新組合三段 prompt ----
+    // ---- 第四段：動作影片 Prompt（最下方，含使用者自行輸入的動作內容）----
+    function buildPromptC2() {
+        const actions = document.getElementById('actionsInput2').value || '（尚未輸入動作內容）';
+        let res = config.template2c || defaultTemplateC2;
+        res = res.replace(/{actions}/g, actions);
+        document.getElementById('promptOutputC2').value = res;
+    }
+
+    // ---- 動態貼圖頁面：一次重新組合四段 prompt ----
     function buildAllPrompts2() {
         buildPromptA2();
         buildPrompt2();
         buildPromptB2();
+        buildPromptC2();
     }
 
     // ---- 動態貼圖 Prompt 組裝（主要 4×2 貼圖 prompt）----
