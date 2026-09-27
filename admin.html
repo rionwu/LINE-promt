@@ -94,23 +94,37 @@
         <textarea id="templateInput" class="template-box"></textarea>
     </div>
 
+    <!-- 動態貼圖 - 三向圖 Prompt 模板設定 -->
+    <div class="card">
+        <h2>5. 動態貼圖 - 三向圖 Prompt 模板</h2>
+        <p class="card-desc">顯示在前台「畫風」下方、「8句常用台詞」上方。可使用 {artStyle} 變數，會自動代入使用者選擇（或自訂）的畫風。</p>
+        <textarea id="template2aInput" class="template-box" style="height: 140px;"></textarea>
+    </div>
+
     <!-- 動態貼圖 Prompt 模板設定 -->
     <div class="card">
-        <h2>5. 動態貼圖 Prompt 模板設定</h2>
+        <h2>6. 動態貼圖 - 主要 Prompt 模板</h2>
         <p class="card-desc">可使用 {artStyle}、{textColor}、{linesText} 三個變數，會自動代入前台使用者填寫的內容。</p>
         <textarea id="template2Input" class="template-box" style="height: 320px;"></textarea>
     </div>
 
+    <!-- 動態貼圖 - 動作表情 Prompt 模板設定 -->
+    <div class="card">
+        <h2>7. 動態貼圖 - 動作表情 Prompt 模板</h2>
+        <p class="card-desc">顯示在前台「主要 Prompt」下方。可使用 {artStyle} 變數（若模板中有寫的話），沒有寫則不會代入。</p>
+        <textarea id="template2bInput" class="template-box" style="height: 160px;"></textarea>
+    </div>
+
     <!-- 動態貼圖 - 8 句常用台詞管理 -->
     <div class="card">
-        <h2>6. 動態貼圖 - 8句常用台詞管理</h2>
+        <h2>8. 動態貼圖 - 8句常用台詞管理</h2>
         <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 8 句台詞。</p>
         <div id="presets2Container"></div>
     </div>
 </div>
 
 <script>
-    let config = { artStyles: [], subStyles: [], template: "", template2: "", presets2: {} };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", presets2: {} };
     let currentSha = ""; // GitHub API 修改需要 SHA
 
     // 動態貼圖 8 句台詞的預設分類（key 對應前台 applyPreset2 的參數）
@@ -130,6 +144,16 @@
         heal:  ["加油喔", "隨時都在", "沒關係的", "放輕鬆", "今天也很棒", "休息一下吧", "辛苦你了", "拍拍"],
         funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演"]
     };
+
+    // 三向圖 Prompt 預設模板（若 data.json 尚未包含 template2a 時使用）
+    const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像，設計後提供我角色的三向圖，正面、側面、背面
+
+角色畫風：{artStyle}`;
+
+    // 動作表情 Prompt 預設模板（若 data.json 尚未包含 template2b 時使用）
+    const defaultTemplateB2 = `為這張圖片裡的每一個角色設計6秒的動作表情，要做影片，給我每張圖片詳細的 prompt，表情不要一樣，完全不同的情境也可以。限制影片的變化都要在單獨的圖片框框內，不可以超出框框，動作要明顯，不要秒數，提供我動作順序的描述，提供規格如下：
+01：描述
+02：描述`;
 
     // 動態貼圖 Prompt 預設模板（若 data.json 尚未包含 template2 時使用）
     const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
@@ -241,6 +265,8 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
     // 補上舊版 data.json 可能缺少的欄位（template2 / presets2），確保後台可直接編輯
     function normalizeConfig() {
         if (!config.template2) config.template2 = defaultTemplate2;
+        if (!config.template2a) config.template2a = defaultTemplateA2;
+        if (!config.template2b) config.template2b = defaultTemplateB2;
         if (!config.presets2) config.presets2 = {};
         preset2Meta.forEach(({ key }) => {
             if (!Array.isArray(config.presets2[key]) || config.presets2[key].length !== 8) {
@@ -284,7 +310,9 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         });
 
         document.getElementById('templateInput').value = config.template || '';
+        document.getElementById('template2aInput').value = config.template2a || defaultTemplateA2;
         document.getElementById('template2Input').value = config.template2 || defaultTemplate2;
+        document.getElementById('template2bInput').value = config.template2b || defaultTemplateB2;
 
         renderPresets2();
     }
@@ -358,7 +386,9 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         }
 
         config.template = document.getElementById('templateInput').value;
+        config.template2a = document.getElementById('template2aInput').value;
         config.template2 = document.getElementById('template2Input').value;
+        config.template2b = document.getElementById('template2bInput').value;
 
         // 轉 Base64
         const contentJson = JSON.stringify(config, null, 4);
