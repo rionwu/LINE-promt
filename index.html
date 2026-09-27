@@ -256,13 +256,17 @@
         funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演", "登愣", "阿不就好棒棒", "差點吐血", "我就爛", "算你狠", "廢到笑", "驚不驚喜", "下去吧"]
     };
 
-    // 動態貼圖頁面使用同一組台詞的前 8 句
+    // 動態貼圖頁面的 8 句預設台詞：優先使用後台 (data.json -> config.presets2) 設定的內容，
+    // 若尚未設定，才退回使用靜態頁面 16 句台詞的前 8 句作為預設值。
     function presets8(key) {
+        if (config.presets2 && config.presets2[key]) {
+            return config.presets2[key];
+        }
         return (presets[key] || []).slice(0, 8);
     }
 
-    // 動態貼圖 Prompt 模板（4×2、8 格）
-    const template2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
+    // 動態貼圖 Prompt 模板（4×2、8 格）— 內建預設值，會被 data.json 的 config.template2 覆蓋
+    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
 
 基本規格：
 - 畫布尺寸：16:9
@@ -568,7 +572,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             linesList.push(`${i}. ${val}`);
         }
 
-        let res = template2;
+        let res = config.template2 || defaultTemplate2;
         res = res.replace(/{artStyle}/g, art);
         res = res.replace(/{textColor}/g, textClr);
         res = res.replace(/{linesText}/g, linesList.join('\n'));
