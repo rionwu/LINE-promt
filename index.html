@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 貼圖 Prompt 生成器</title>
+
+    <script>
+        // 偵測 LINE 內建瀏覽器，強制改用手機預設瀏覽器開啟。
+        // 原因：LINE 內建瀏覽器對複製到剪貼簿（navigator.clipboard）等功能支援不完整，
+        // 會導致頁面上的「📋 複製 Prompt」按鈕失效。
+        // 做法：在網址加上 LINE 官方支援的 openExternalBrowser=1 參數，
+        // LINE 偵測到這個參數時會自動改用手機的預設瀏覽器（Safari / Chrome 等）開啟同一個網址。
+        (function () {
+            try {
+                var ua = navigator.userAgent || navigator.vendor || window.opera || '';
+                var isLineBrowser = /Line/i.test(ua);
+                if (!isLineBrowser) return;
+
+                var currentUrl = new URL(window.location.href);
+                if (currentUrl.searchParams.get('openExternalBrowser') === '1') return; // 避免重複導向
+
+                currentUrl.searchParams.set('openExternalBrowser', '1');
+                window.location.replace(currentUrl.toString());
+            } catch (e) {
+                // 若瀏覽器不支援 URL API 或發生其他例外，就不強制跳轉，維持原本頁面正常顯示。
+                console.warn('LINE 瀏覽器偵測失敗，略過自動跳轉：', e);
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css"/>
 
     <style>
