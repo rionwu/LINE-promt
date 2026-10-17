@@ -29,6 +29,7 @@
         .btn-success { background: #16a34a; color: white; }
         .btn-success:hover { background: #15803d; }
         .btn-danger { background: var(--danger-color); color: white; }
+        .btn-gray { background: #e2e8f0; color: #334155; }
 
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card h2 { font-size: 1.2rem; margin-bottom: 16px; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
@@ -51,6 +52,16 @@
         .preset2-group h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
         .preset2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
         .preset2-grid input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.88rem; }
+
+        /* 台詞庫管理 */
+        .phrase-cat { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .phrase-cat-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .phrase-cat-head input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.9rem; }
+        .phrase-cat-head input.icon-input { width: 64px; text-align: center; }
+        .phrase-cat-head input.name-input { flex: 1; font-weight: 700; }
+        .phrase-cat textarea { width: 100%; height: 130px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.88rem; outline: none; line-height: 1.6; resize: vertical; }
+        .phrase-count { font-size: 0.78rem; color: var(--text-sub); margin-top: 4px; }
+        .phrase-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -128,10 +139,24 @@
         <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 8 句台詞。</p>
         <div id="presets2Container"></div>
     </div>
+
+    <!-- 台詞庫管理（挑選台詞功能） -->
+    <div class="card">
+        <h2>10. 台詞庫管理（挑選台詞）</h2>
+        <p class="card-desc">前台「靜態 16 句」與「動態 8 句」的挑選台詞功能共用這份台詞庫。每個分類一行一句台詞，空白行會自動忽略、重複的台詞會自動合併。</p>
+        <div id="phraseLibraryContainer"></div>
+        <div class="phrase-actions">
+            <button class="btn btn-primary" onclick="addPhraseCategory()">+ 新增分類</button>
+            <button class="btn btn-gray" onclick="resetPhraseLibrary()">↺ 還原為預設台詞庫</button>
+        </div>
+    </div>
 </div>
 
+<!-- 台詞庫預設值（與前台共用，請與本檔放在同一個資料夾） -->
+<script src="phrase-picker.js"></script>
+
 <script>
-    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", presets2: {} };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", presets2: {}, phraseLibrary: [] };
     let currentSha = ""; // GitHub API 修改需要 SHA
 
     // 動態貼圖 8 句台詞的預設分類（key 對應前台 applyPreset2 的參數）
@@ -232,6 +257,10 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 16 句日常台詞內容：
 {linesText}`;
 
+    function cloneDefaultLibrary() {
+        return JSON.parse(JSON.stringify(PhrasePicker.DEFAULT_LIBRARY));
+    }
+
     // 載入本地存儲的 GitHub Token 設定
     function loadGHSettings() {
         document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
@@ -283,7 +312,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         }
     }
 
-    // 補上舊版 data.json 可能缺少的欄位（template2 / presets2），確保後台可直接編輯
+    // 補上舊版 data.json 可能缺少的欄位（template2 / presets2 / phraseLibrary），確保後台可直接編輯
     function normalizeConfig() {
         if (!config.template2) config.template2 = defaultTemplate2;
         if (!config.template2a) config.template2a = defaultTemplateA2;
@@ -295,6 +324,9 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
                 config.presets2[key] = (defaultPresets2[key] || []).slice(0, 8);
             }
         });
+        if (!Array.isArray(config.phraseLibrary) || !config.phraseLibrary.length) {
+            config.phraseLibrary = cloneDefaultLibrary();
+        }
     }
 
     function renderUI() {
@@ -338,6 +370,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         document.getElementById('template2cInput').value = config.template2c || defaultTemplateC2;
 
         renderPresets2();
+        renderPhraseLibrary();
     }
 
     function renderPresets2() {
@@ -371,6 +404,97 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             group.appendChild(grid);
             container.appendChild(group);
         });
+    }
+
+    // ---- 台詞庫管理 ----
+    function countPhrases(text) {
+        return new Set(text.split('\n').map(s => s.trim()).filter(Boolean)).size;
+    }
+
+    function renderPhraseLibrary() {
+        const container = document.getElementById('phraseLibraryContainer');
+        container.innerHTML = '';
+
+        config.phraseLibrary.forEach((cat, index) => {
+            const box = document.createElement('div');
+            box.className = 'phrase-cat';
+
+            const head = document.createElement('div');
+            head.className = 'phrase-cat-head';
+
+            const icon = document.createElement('input');
+            icon.type = 'text'; icon.className = 'icon-input'; icon.placeholder = '圖示'; icon.value = cat.icon || '';
+            icon.addEventListener('input', () => { config.phraseLibrary[index].icon = icon.value; });
+
+            const name = document.createElement('input');
+            name.type = 'text'; name.className = 'name-input'; name.placeholder = '分類名稱'; name.value = cat.name || '';
+            name.addEventListener('input', () => { config.phraseLibrary[index].name = name.value; });
+
+            const up = document.createElement('button');
+            up.className = 'btn btn-gray'; up.textContent = '↑'; up.title = '上移';
+            up.onclick = () => movePhraseCategory(index, -1);
+            const down = document.createElement('button');
+            down.className = 'btn btn-gray'; down.textContent = '↓'; down.title = '下移';
+            down.onclick = () => movePhraseCategory(index, 1);
+            const del = document.createElement('button');
+            del.className = 'btn btn-danger'; del.textContent = '刪除';
+            del.onclick = () => deletePhraseCategory(index);
+
+            [icon, name, up, down, del].forEach(x => head.appendChild(x));
+            box.appendChild(head);
+
+            const ta = document.createElement('textarea');
+            ta.placeholder = '一行一句台詞';
+            ta.value = (cat.phrases || []).join('\n');
+            const countEl = document.createElement('div');
+            countEl.className = 'phrase-count';
+            countEl.textContent = `共 ${countPhrases(ta.value)} 句`;
+            ta.addEventListener('input', () => {
+                config.phraseLibrary[index].phrases = ta.value.split('\n');
+                countEl.textContent = `共 ${countPhrases(ta.value)} 句`;
+            });
+            box.appendChild(ta);
+            box.appendChild(countEl);
+
+            container.appendChild(box);
+        });
+    }
+
+    function addPhraseCategory() {
+        config.phraseLibrary.push({ icon: '✨', name: '新分類', phrases: [] });
+        renderPhraseLibrary();
+    }
+
+    function deletePhraseCategory(index) {
+        const name = config.phraseLibrary[index].name || '此分類';
+        if (!confirm(`確定要刪除「${name}」？`)) return;
+        config.phraseLibrary.splice(index, 1);
+        renderPhraseLibrary();
+    }
+
+    function movePhraseCategory(index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= config.phraseLibrary.length) return;
+        const arr = config.phraseLibrary;
+        [arr[index], arr[target]] = [arr[target], arr[index]];
+        renderPhraseLibrary();
+    }
+
+    function resetPhraseLibrary() {
+        if (!confirm('確定要還原為預設台詞庫？目前台詞庫的修改會被覆蓋（儲存前不會同步到 GitHub）。')) return;
+        config.phraseLibrary = cloneDefaultLibrary();
+        renderPhraseLibrary();
+    }
+
+    // 儲存前整理：去除空白、空行與重複台詞，並略過沒有台詞的分類
+    function cleanPhraseLibrary() {
+        return config.phraseLibrary
+            .map(cat => ({
+                icon: (cat.icon || '').trim(),
+                name: (cat.name || '').trim() || '未命名',
+                phrases: Array.from(new Set((cat.phrases || []).map(s => String(s).trim()).filter(Boolean)))
+            }))
+            .filter(cat => cat.phrases.length);
     }
 
     function addArtStyle() {
@@ -414,6 +538,13 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         config.template2b = document.getElementById('template2bInput').value;
         config.template2c = document.getElementById('template2cInput').value;
 
+        const cleanedLibrary = cleanPhraseLibrary();
+        if (!cleanedLibrary.length) {
+            alert('台詞庫至少需要一個含有台詞的分類，請先新增台詞，或按「還原為預設台詞庫」。');
+            return;
+        }
+        config.phraseLibrary = cleanedLibrary;
+
         // 轉 Base64
         const contentJson = JSON.stringify(config, null, 4);
         const encodedContent = btoa(unescape(encodeURIComponent(contentJson)));
@@ -441,6 +572,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             if (res.ok) {
                 const resData = await res.json();
                 currentSha = resData.content.sha;
+                renderPhraseLibrary(); // 以整理後的內容重新顯示
                 alert('🚀 成功同步更新至 GitHub！前台網頁已同步最新內容。');
             } else {
                 const err = await res.json();
