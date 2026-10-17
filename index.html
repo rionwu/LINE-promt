@@ -106,6 +106,12 @@
         textarea { width: 100%; height: 260px; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 0.85rem; font-family: monospace; background: #fff; resize: vertical; line-height: 1.5; outline: none; }
 
         .footer { text-align: center; color: var(--text-sub); font-size: 0.8rem; margin-top: 40px; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            .header h1 { font-size: 1.6rem; }
+            .nav-btn { font-size: 0.8rem; }
+        }
     </style>
 </head>
 <body>
@@ -116,7 +122,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 1：原本的「AI 貼圖 Prompt 生成器」（未變更）                  -->
+<!-- PAGE 1：靜態貼圖 Prompt 生成器（16 句，新增台詞挑選）              -->
 <!-- ============================================================ -->
 <div class="container page active" id="page1">
     <div class="header">
@@ -180,6 +186,9 @@
             <button class="preset-btn" onclick="applyPreset('funny')">搞笑逗趣</button>
         </div>
 
+        <!-- 🔍 台詞挑選（16 句） -->
+        <div id="picker1"></div>
+
         <div class="inputs-16-grid" id="inputs16Container"></div>
     </div>
 
@@ -198,7 +207,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 2：新增「動態貼圖 Prompt」                                   -->
+<!-- PAGE 2：動態貼圖 Prompt（8 句，新增台詞挑選）                      -->
 <!-- ============================================================ -->
 <div class="container page" id="page2">
     <div class="header">
@@ -255,6 +264,9 @@
             <button class="preset-btn" onclick="applyPreset2('funny')">搞笑逗趣</button>
         </div>
 
+        <!-- 🔍 台詞挑選（8 句） -->
+        <div id="picker2"></div>
+
         <div class="inputs-16-grid" id="inputs8Container"></div>
     </div>
 
@@ -294,11 +306,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+<!-- 台詞挑選元件（請與本檔放在同一個資料夾） -->
+<script src="phrase-picker.js"></script>
 
 <script>
     let config = { artStyles: [], subStyles: [], template: "" };
     let currentCategory = '可愛療癒系';
     let bgPickr, textPickr, textPickr2;
+    let picker1, picker2; // 台詞挑選元件（靜態 16 句 / 動態 8 句）
 
     const CUSTOM_ART_VALUE = '__custom__';
 
@@ -408,6 +423,9 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             loadArtStyles2();
             buildPrompt();
             buildAllPrompts2();
+            // 台詞庫載入後，更新兩個挑選元件的分類與台詞
+            if (picker1) picker1.refresh();
+            if (picker2) picker2.refresh();
         } catch (e) {
             alert('讀取 data.json 失敗，請確認檔案是否存在。');
         }
@@ -424,9 +442,50 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         initPickr();
         render16Inputs();
         render8Inputs();
+        initPickers();
         applyPreset('daily');
         applyPreset2('daily');
         fetchConfig();
+    }
+
+    // ---- 台詞挑選元件：選到的台詞會即時填入下方輸入框，並更新 Prompt ----
+    function readLines(prefix, count) {
+        const arr = [];
+        for (let i = 1; i <= count; i++) arr.push(document.getElementById(`${prefix}${i}`).value || '');
+        return arr;
+    }
+
+    function initPickers() {
+        picker1 = PhrasePicker.create({
+            mountId: 'picker1',
+            count: 16,
+            getLibrary: () => config.phraseLibrary,
+            onChange: (arr) => {
+                for (let i = 1; i <= 16; i++) document.getElementById(`line_${i}`).value = arr[i - 1] || '';
+                buildPrompt();
+            }
+        });
+
+        picker2 = PhrasePicker.create({
+            mountId: 'picker2',
+            count: 8,
+            getLibrary: () => config.phraseLibrary,
+            onChange: (arr) => {
+                for (let i = 1; i <= 8; i++) document.getElementById(`line2_${i}`).value = arr[i - 1] || '';
+                buildAllPrompts2();
+            }
+        });
+    }
+
+    // 手動修改輸入框時，同步更新挑選元件的「已選台詞」
+    function onLineInput1() {
+        buildPrompt();
+        if (picker1) picker1.setLines(readLines('line_', 16));
+    }
+
+    function onLineInput2() {
+        buildAllPrompts2();
+        if (picker2) picker2.setLines(readLines('line2_', 8));
     }
 
     function initPickr() {
@@ -479,7 +538,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         for (let i = 1; i <= 16; i++) {
             const div = document.createElement('div');
             div.className = 'line-item';
-            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line_${i}" oninput="buildPrompt()">`;
+            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line_${i}" oninput="onLineInput1()">`;
             container.appendChild(div);
         }
     }
@@ -490,7 +549,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         for (let i = 1; i <= 8; i++) {
             const div = document.createElement('div');
             div.className = 'line-item';
-            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="buildAllPrompts2()">`;
+            div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="onLineInput2()">`;
             container.appendChild(div);
         }
     }
@@ -598,6 +657,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
                 document.getElementById(`line_${i}`).value = list[i - 1] || '';
             }
             buildPrompt();
+            if (picker1) picker1.setLines(readLines('line_', 16));
         }
     }
 
@@ -608,6 +668,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
                 document.getElementById(`line2_${i}`).value = list[i - 1] || '';
             }
             buildAllPrompts2();
+            if (picker2) picker2.setLines(readLines('line2_', 8));
         }
     }
 
