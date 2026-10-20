@@ -28,29 +28,41 @@
         const st = document.createElement('style');
         st.id = 'pk-style';
         st.textContent = `
-        .pk-box{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:14px;margin-bottom:16px}
-        .pk-title{font-size:.95rem;font-weight:700;margin-bottom:10px}
-        .pk-cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
-        .pk-cat{flex:0 0 auto;border:1px solid #e2e8f0;background:#edf2f7;color:#718096;border-radius:999px;padding:6px 12px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap}
-        .pk-cat.active{background:#388e3c;border-color:#388e3c;color:#fff}
-        .pk-phrases{display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:2px;margin-bottom:12px}
-        .pk-chip{border:1px solid #cbd5e0;background:#fff;color:#1a202c;border-radius:8px;padding:7px 12px;font-size:.88rem;cursor:pointer}
-        .pk-chip:active{background:#e8f5e9}
-        .pk-chip.used{opacity:.35;cursor:not-allowed;background:#f1f5f9}
-        .pk-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-        .pk-btn{border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:700;cursor:pointer;background:#388e3c;color:#fff}
-        .pk-btn.sec{background:#edf2f7;color:#4a5568}
+        .pk-box{border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:14px;margin-bottom:16px}
+        .pk-box button,.pk-box input,.pk-box label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+        .pk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .pk-title{font-size:1rem;font-weight:800;color:#1a202c}
+        .pk-count{font-size:1.05rem;font-weight:800;color:#388e3c}
+        .pk-count.full{color:#b45309}
+        .pk-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:8px}
+        .pk-bar-fill{height:100%;background:#388e3c;border-radius:3px;transition:width .2s}
+        .pk-status{font-size:.82rem;color:#718096;margin-bottom:10px;min-height:1.2em;line-height:1.4}
+        .pk-status.warn{color:#b45309;font-weight:700}
+        .pk-selected{display:flex;flex-wrap:wrap;gap:6px;min-height:46px;padding:8px;background:#f1f8f2;border:1px dashed #a5d6a7;border-radius:10px;margin-bottom:12px}
+        .pk-sel{display:inline-flex;align-items:center;gap:6px;min-height:36px;background:#fff;border:1px solid #a5d6a7;color:#1b5e20;border-radius:9px;padding:6px 10px;font-size:.9rem;cursor:pointer}
+        .pk-sel b{font-size:.72rem;color:#388e3c;min-width:14px;text-align:center}
+        .pk-sel i{font-style:normal;color:#b91c1c;font-weight:800;font-size:1rem;line-height:1}
+        .pk-empty{font-size:.85rem;color:#8a9aa9;align-self:center}
+        .pk-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+        .pk-btn{min-height:46px;border:none;border-radius:10px;padding:8px 12px;font-size:.95rem;font-weight:700;cursor:pointer;background:#388e3c;color:#fff}
+        .pk-btn:active{opacity:.85;transform:scale(.98)}
+        .pk-btn.main{grid-column:1/-1}
+        .pk-btn.sec{background:#edf2f7;color:#2d3748}
         .pk-btn.warn{background:#fee2e2;color:#b91c1c}
-        .pk-opt{display:flex;align-items:center;gap:4px;font-size:.82rem;color:#4a5568}
-        .pk-add{display:flex;gap:8px;margin-bottom:12px}
-        .pk-add input{flex:1;min-width:0;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;outline:none}
-        .pk-status{font-size:.82rem;font-weight:700;color:#388e3c;margin-bottom:8px}
-        .pk-status.full{color:#b45309}
-        .pk-selected{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
-        .pk-sel{display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20;border-radius:8px;padding:6px 10px;font-size:.85rem;cursor:pointer}
-        .pk-sel b{font-size:.72rem;color:#388e3c}
-        .pk-sel i{font-style:normal;color:#b91c1c;font-weight:700}
-        .pk-empty{font-size:.82rem;color:#a0aec0}
+        .pk-opt{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:40px;font-size:.9rem;color:#4a5568;cursor:pointer}
+        .pk-opt input{width:22px;height:22px;accent-color:#388e3c;flex-shrink:0}
+        .pk-sec{font-size:.82rem;font-weight:700;color:#4a5568;margin:14px 0 8px}
+        .pk-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+        .pk-cat{position:relative;min-height:42px;display:flex;align-items:center;justify-content:center;gap:4px;border:1px solid #e2e8f0;background:#f7fafc;color:#4a5568;border-radius:10px;padding:6px 4px;font-size:.84rem;font-weight:700;cursor:pointer;white-space:nowrap}
+        .pk-cat.active{background:#388e3c;border-color:#388e3c;color:#fff}
+        .pk-badge{min-width:18px;height:18px;border-radius:9px;background:#f59e0b;color:#fff;font-size:.7rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+        .pk-phrases{display:flex;flex-wrap:wrap;gap:8px}
+        .pk-chip{min-height:42px;border:1px solid #cbd5e0;background:#fff;color:#1a202c;border-radius:10px;padding:8px 14px;font-size:.95rem;cursor:pointer}
+        .pk-chip:active{background:#e8f5e9}
+        .pk-chip.on{background:#e8f5e9;border-color:#388e3c;color:#1b5e20;font-weight:700}
+        .pk-add{display:flex;gap:8px}
+        .pk-add input{flex:1;min-width:0;min-height:46px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none}
+        .pk-add .pk-btn{flex:0 0 auto;min-width:92px}
         `;
         document.head.appendChild(st);
     }
@@ -134,60 +146,24 @@
             mount.innerHTML = '';
 
             const box = el('div', 'pk-box');
-            box.appendChild(el('div', 'pk-title', `🔍 挑選台詞（目標 ${count} 句）`));
-
-            // 分類
-            const cats = el('div', 'pk-cats');
-            lib.forEach((c, i) => {
-                const b = el('button', 'pk-cat' + (i === catIndex ? ' active' : ''), `${c.icon || ''}${c.name || '未命名'}`);
-                b.type = 'button';
-                b.onclick = () => { catIndex = i; render(); };
-                cats.appendChild(b);
-            });
-            box.appendChild(cats);
-
-            // 台詞
-            const list = el('div', 'pk-phrases');
-            lib[catIndex].phrases.forEach(p => {
-                const t = String(p).trim();
-                if (!t) return;
-                const used = avoidDup && selected.includes(t);
-                const b = el('button', 'pk-chip' + (used ? ' used' : ''), t);
-                b.type = 'button';
-                b.onclick = () => { if (!used) add(t); };
-                list.appendChild(b);
-            });
-            box.appendChild(list);
-
-            // 工具列
-            const tools = el('div', 'pk-tools');
-            const bRand = el('button', 'pk-btn', `🎲 隨機挑選（一鍵帶入 ${count} 句）`); bRand.type = 'button'; bRand.onclick = randomPick;
-            const bFill = el('button', 'pk-btn sec', '自動補滿'); bFill.type = 'button'; bFill.onclick = autoFill;
-            const bClear = el('button', 'pk-btn warn', '清空已選'); bClear.type = 'button'; bClear.onclick = clearAll;
-            const opt = el('label', 'pk-opt');
-            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = avoidDup;
-            cb.onchange = () => { avoidDup = cb.checked; render(); };
-            opt.appendChild(cb); opt.appendChild(document.createTextNode('避免重複'));
-            [bRand, bFill, bClear, opt].forEach(x => tools.appendChild(x));
-            box.appendChild(tools);
-
-            // 自行輸入
-            const addRow = el('div', 'pk-add');
-            const input = document.createElement('input');
-            input.type = 'text'; input.placeholder = '自己輸入台詞，按「加入台詞」';
-            const bAdd = el('button', 'pk-btn', '加入台詞'); bAdd.type = 'button';
-            const doAdd = () => { const v = input.value; if (v.trim()) { add(v); } };
-            bAdd.onclick = doAdd;
-            input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
-            addRow.appendChild(input); addRow.appendChild(bAdd);
-            box.appendChild(addRow);
-
-            // 已選
             const full = selected.length >= count;
-            box.appendChild(el('div', 'pk-status' + (full ? ' full' : ''),
-                notice || (full ? `✓ 已滿 ${count} 句（點擊可移除）` : `已選 ${selected.length} / ${count} 句（點擊可移除）`)));
+
+            // 標題 + 進度
+            const head = el('div', 'pk-head');
+            head.appendChild(el('div', 'pk-title', '🔍 挑選台詞'));
+            head.appendChild(el('div', 'pk-count' + (full ? ' full' : ''), `${selected.length} / ${count}`));
+            box.appendChild(head);
+            const bar = el('div', 'pk-bar');
+            const fill = el('div', 'pk-bar-fill');
+            fill.style.width = Math.min(100, selected.length / count * 100) + '%';
+            bar.appendChild(fill);
+            box.appendChild(bar);
+            box.appendChild(el('div', 'pk-status' + (notice ? ' warn' : ''),
+                notice || (full ? '✓ 已選滿，點台詞可移除' : '點下方台詞加入，再點一次可取消')));
+
+            // 已選台詞（點一下移除）
             const sel = el('div', 'pk-selected');
-            if (!selected.length) sel.appendChild(el('div', 'pk-empty', '尚未選擇台詞，點上方台詞即可加入'));
+            if (!selected.length) sel.appendChild(el('div', 'pk-empty', '尚未選擇台詞'));
             selected.forEach((t, i) => {
                 const chip = el('span', 'pk-sel');
                 chip.appendChild(el('b', '', String(i + 1)));
@@ -197,6 +173,63 @@
                 sel.appendChild(chip);
             });
             box.appendChild(sel);
+
+            // 快速工具
+            const tools = el('div', 'pk-tools');
+            const bRand = el('button', 'pk-btn main', `🎲 隨機挑選 ${count} 句`); bRand.type = 'button'; bRand.onclick = randomPick;
+            const bFill = el('button', 'pk-btn sec', '自動補滿'); bFill.type = 'button'; bFill.onclick = autoFill;
+            const bClear = el('button', 'pk-btn warn', '清空已選'); bClear.type = 'button'; bClear.onclick = clearAll;
+            const opt = el('label', 'pk-opt');
+            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = avoidDup;
+            cb.onchange = () => { avoidDup = cb.checked; render(); };
+            opt.appendChild(cb); opt.appendChild(document.createTextNode('避免重複'));
+            [bRand, bFill, bClear, opt].forEach(x => tools.appendChild(x));
+            box.appendChild(tools);
+
+            // 分類（全部直接顯示，自動換行）
+            box.appendChild(el('div', 'pk-sec', '選擇分類'));
+            const cats = el('div', 'pk-cats');
+            lib.forEach((c, i) => {
+                const b = el('button', 'pk-cat' + (i === catIndex ? ' active' : ''));
+                b.type = 'button';
+                b.appendChild(document.createTextNode(`${c.icon || ''}${c.name || '未命名'}`));
+                const set = new Set(c.phrases.map(x => String(x).trim()));
+                const n = selected.filter(t => set.has(t)).length;
+                if (n > 0) b.appendChild(el('span', 'pk-badge', String(n)));
+                b.onclick = () => { catIndex = i; render(); };
+                cats.appendChild(b);
+            });
+            box.appendChild(cats);
+
+            // 台詞（點一下加入、已選的再點一次取消）
+            box.appendChild(el('div', 'pk-sec', `${lib[catIndex].icon || ''}${lib[catIndex].name || ''} 的台詞`));
+            const list = el('div', 'pk-phrases');
+            lib[catIndex].phrases.forEach(p => {
+                const t = String(p).trim();
+                if (!t) return;
+                const on = selected.includes(t);
+                const b = el('button', 'pk-chip' + (on ? ' on' : ''), (on ? '✓ ' : '') + t);
+                b.type = 'button';
+                b.onclick = () => {
+                    const idx = selected.indexOf(t);
+                    if (avoidDup && idx >= 0) removeAt(idx); else add(t);
+                };
+                list.appendChild(b);
+            });
+            box.appendChild(list);
+
+            // 自行輸入
+            box.appendChild(el('div', 'pk-sec', '自己輸入台詞'));
+            const addRow = el('div', 'pk-add');
+            const input = document.createElement('input');
+            input.type = 'text'; input.placeholder = '輸入後按「加入」';
+            input.enterKeyHint = 'done';
+            const bAdd = el('button', 'pk-btn', '＋ 加入'); bAdd.type = 'button';
+            const doAdd = () => { const v = input.value; if (v.trim()) add(v); };
+            bAdd.onclick = doAdd;
+            input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
+            addRow.appendChild(input); addRow.appendChild(bAdd);
+            box.appendChild(addRow);
 
             mount.appendChild(box);
         }
