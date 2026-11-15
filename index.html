@@ -212,7 +212,7 @@
 <div class="container page" id="page2">
     <div class="header">
         <h1>動態貼圖 Prompt 生成器</h1>
-        <p>畫風可自訂、文字顏色可調整、8 句常用台詞，一鍵生成 4×2（8 格）動態貼圖製作提示詞</p>
+        <p>畫風可自訂、文字顏色可調整、8 句常用台詞，一鍵生成 3X3（9 格）動態貼圖製作提示詞</p>
     </div>
 
     <div class="color-grid">
@@ -255,7 +255,7 @@
     </div>
 
     <div class="lines-section">
-        <div class="lines-header">8 句常用台詞</div>
+        <div class="lines-header">9 句常用台詞</div>
         <div class="preset-buttons">
             <button class="preset-btn" onclick="applyPreset2('sweet')">甜蜜情侶</button>
             <button class="preset-btn" onclick="applyPreset2('daily')">日常碎碎唸</button>
@@ -288,12 +288,12 @@
     </div>
 
     <div class="lines-section" style="margin-top: 30px;">
-        <div class="lines-header">🎞️ 動作內容（自行輸入 8 格動作，例如：01：張嘴大笑並揮手）</div>
+        <div class="lines-header">🎞️ 動作內容（自行輸入 9 格動作，例如：01：張嘴大笑並揮手）</div>
         <textarea id="actionsInput2" placeholder="請貼上由GPT寫出來的動作指令" style="width:100%; min-height:160px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:#fff; font-size:0.9rem; outline:none; resize:vertical; line-height:1.6;" oninput="buildPromptC2()"></textarea>
     </div>
 
     <div class="output-card" style="margin-top: 20px;">
-        <h3>🕺 動作影片 Prompt（4×2 動態貼圖用）</h3>
+        <h3>🕺 動作影片 Prompt（3X3 動態貼圖用）</h3>
         <textarea id="promptOutputC2" readonly style="height: 260px;"></textarea>
         <div class="action-btn-wrapper" style="margin: 16px 0 0;">
             <button class="btn-copy" onclick="copyGeneric('promptOutputC2')">📋 複製 動作內容Prompt</button>
@@ -331,7 +331,7 @@
         if (config.presets2 && config.presets2[key]) {
             return config.presets2[key];
         }
-        return (presets[key] || []).slice(0, 8);
+        return (presets[key] || []).slice(0, 9);
     }
 
     // 動作影片 Prompt（放在最下方）— 內建預設值，會被 data.json 的 config.template2c 覆蓋
@@ -358,13 +358,13 @@
 01：描述
 02：描述`;
 
-    // 動態貼圖 Prompt 模板（4×2、8 格）— 內建預設值，會被 data.json 的 config.template2 覆蓋
-    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
+    // 動態貼圖 Prompt 模板（3X3、9 格）— 內建預設值，會被 data.json 的 config.template2 覆蓋
+    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 3X3 貼圖圖板。
 
 基本規格：
-- 畫布尺寸：16:9
-- 排版方式：4×2，共 8 格。
-- 8 張貼圖需從左到右、從上到下排列。
+- 畫布尺寸：1:1
+- 排版方式：3X3，共 9 格。
+- 9 張貼圖需從左到右、從上到下排列。
 - 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子5px。
 
 角色一致性：
@@ -409,7 +409,7 @@
 
 Text: everyday Chinese phrases, in a cute handwritten style with ink splash accents.，並設計每一格的表情、動作與文字： 
 
-請依照 4×2 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
+請依照 3X3 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
 
 16 句日常台詞內容：
 {linesText}`;
@@ -468,10 +468,10 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 
         picker2 = PhrasePicker.create({
             mountId: 'picker2',
-            count: 8,
+            count: 9,
             getLibrary: () => config.phraseLibrary,
             onChange: (arr) => {
-                for (let i = 1; i <= 8; i++) document.getElementById(`line2_${i}`).value = arr[i - 1] || '';
+                for (let i = 1; i <= 9; i++) document.getElementById(`line2_${i}`).value = arr[i - 1] || '';
                 buildAllPrompts2();
             }
         });
@@ -485,7 +485,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 
     function onLineInput2() {
         buildAllPrompts2();
-        if (picker2) picker2.setLines(readLines('line2_', 8));
+        if (picker2) picker2.setLines(readLines('line2_', 9));
     }
 
     function initPickr() {
@@ -546,7 +546,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
     function render8Inputs() {
         const container = document.getElementById('inputs8Container');
         container.innerHTML = '';
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= 9; i++) {
             const div = document.createElement('div');
             div.className = 'line-item';
             div.innerHTML = `<label>台詞 ${i}</label><input type="text" id="line2_${i}" oninput="onLineInput2()">`;
@@ -664,11 +664,11 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
     function applyPreset2(key) {
         const list = presets8(key);
         if (list) {
-            for (let i = 1; i <= 8; i++) {
+            for (let i = 1; i <= 9; i++) {
                 document.getElementById(`line2_${i}`).value = list[i - 1] || '';
             }
             buildAllPrompts2();
-            if (picker2) picker2.setLines(readLines('line2_', 8));
+            if (picker2) picker2.setLines(readLines('line2_', 9));
         }
     }
 
@@ -741,7 +741,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         const art = getArtStyleValue2();
 
         let linesList = [];
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= 9; i++) {
             const val = document.getElementById(`line2_${i}`).value || '';
             linesList.push(`${i}. ${val}`);
         }
