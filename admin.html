@@ -108,7 +108,7 @@
     <!-- 動態貼圖 - 三向圖 Prompt 模板設定 -->
     <div class="card">
         <h2>5. 動態貼圖 - 三向圖 Prompt 模板</h2>
-        <p class="card-desc">顯示在前台「畫風」下方、「8句常用台詞」上方。可使用 {artStyle} 變數，會自動代入使用者選擇（或自訂）的畫風。</p>
+        <p class="card-desc">顯示在前台「畫風」下方、「9句常用台詞」上方。可使用 {artStyle} 變數，會自動代入使用者選擇（或自訂）的畫風。</p>
         <textarea id="template2aInput" class="template-box" style="height: 140px;"></textarea>
     </div>
 
@@ -143,7 +143,7 @@
     <!-- 台詞庫管理（挑選台詞功能） -->
     <div class="card">
         <h2>10. 台詞庫管理（挑選台詞）</h2>
-        <p class="card-desc">前台「靜態 16 句」與「動態 8 句」的挑選台詞功能共用這份台詞庫。每個分類一行一句台詞，空白行會自動忽略、重複的台詞會自動合併。</p>
+        <p class="card-desc">前台「靜態 16 句」與「動態 9 句」的挑選台詞功能共用這份台詞庫。每個分類一行一句台詞，空白行會自動忽略、重複的台詞會自動合併。</p>
         <div id="phraseLibraryContainer"></div>
         <div class="phrase-actions">
             <button class="btn btn-primary" onclick="addPhraseCategory()">+ 新增分類</button>
@@ -179,14 +179,14 @@
 
     // 動作影片 Prompt 預設模板（若 data.json 尚未包含 template2c 時使用）
     // {actions} 會被使用者在前台「動作內容」欄位輸入的文字取代
-    const defaultTemplateC2 = `圖片為3X3的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
+    const defaultTemplateC2 = `圖片為3X3的9格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
 角色需保持跟原本一致角色,維持角色的外觀、毛色、臉型、身型完全一致，禁止變成另一個角色、顏色禁止變色
 製作3X3共9個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在3X3各自獨立的格子內。
 文字需要完整保留，人物跟文字禁止重疊
 禁止一切運鏡行為，讓角色維持一定的大小
 有粗細清楚的貼圖輪廓
 背景使用#28FF28，不需要有其他任何的花紋出現
-8格獨立動畫影片動作不可以有重複、相似、一樣的情況出現，要嚴格執行提供的每個格子的動作指令
+9格獨立動畫影片動作不可以有重複、相似、一樣的情況出現，要嚴格執行提供的每個格子的動作指令
 格子順序由左至右、由上至下排列，左上第一格是01
 動作：
 {actions}`;
@@ -254,7 +254,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 
 請依照 3X3 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
 
-16 句日常台詞內容：
+9 句日常台詞內容：
 {linesText}`;
 
     function cloneDefaultLibrary() {
