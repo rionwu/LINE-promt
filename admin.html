@@ -133,10 +133,10 @@
         <textarea id="template2cInput" class="template-box" style="height: 260px;"></textarea>
     </div>
 
-    <!-- 動態貼圖 - 8 句常用台詞管理 -->
+    <!-- 動態貼圖 - 9 句常用台詞管理 -->
     <div class="card">
-        <h2>9. 動態貼圖 - 8句常用台詞管理</h2>
-        <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 8 句台詞。</p>
+        <h2>9. 動態貼圖 - 9句常用台詞管理</h2>
+        <p class="card-desc">對應前台「動態貼圖」頁面的 5 個快速套用按鈕，各自 9 句台詞。</p>
         <div id="presets2Container"></div>
     </div>
 
@@ -170,22 +170,22 @@
 
     // 若 data.json 尚未包含 presets2，先用這組預設值帶入，方便後台直接編輯
     const defaultPresets2 = {
-        sweet: ["早安呀", "想你了", "愛你喔", "辛苦啦", "抱抱", "想吃什麼", "等下見", "親一個"],
-        daily: ["早安", "辛苦了", "謝謝你", "OK!", "+1", "收到", "哈哈", "拜託了"],
-        work:  ["收到", "辛苦了", "收到謝謝", "好的沒問題", "確認中", "開會中", "稍後回覆", "加油"],
-        heal:  ["加油喔", "隨時都在", "沒關係的", "放輕鬆", "今天也很棒", "休息一下吧", "辛苦你了", "拍拍"],
-        funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演"]
+        sweet: ["早安呀", "想你了", "愛你喔", "辛苦啦", "抱抱", "想吃什麼", "等下見", "親一個", "晚安好夢"],
+        daily: ["早安", "辛苦了", "謝謝你", "OK!", "+1", "收到", "哈哈", "拜託了", "晚安"],
+        work:  ["收到", "辛苦了", "收到謝謝", "好的沒問題", "確認中", "開會中", "稍後回覆", "加油", "下班了"],
+        heal:  ["加油喔", "隨時都在", "沒關係的", "放輕鬆", "今天也很棒", "休息一下吧", "辛苦你了", "拍拍", "抱抱你"],
+        funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "我阿嬤都比你強", "請停止你的表演", "驚不驚喜"]
     };
 
     // 動作影片 Prompt 預設模板（若 data.json 尚未包含 template2c 時使用）
     // {actions} 會被使用者在前台「動作內容」欄位輸入的文字取代
-    const defaultTemplateC2 = `圖片為4X2的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
+    const defaultTemplateC2 = `圖片為3X3的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
 角色需保持跟原本一致角色,維持角色的外觀、毛色、臉型、身型完全一致，禁止變成另一個角色、顏色禁止變色
-製作4X2共8個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在4X2各自獨立的格子內。
+製作3X3共9個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在3X3各自獨立的格子內。
 文字需要完整保留，人物跟文字禁止重疊
 禁止一切運鏡行為，讓角色維持一定的大小
 有粗細清楚的貼圖輪廓
-背景使用#000000，不需要有其他任何的花紋出現
+背景使用#28FF28，不需要有其他任何的花紋出現
 8格獨立動畫影片動作不可以有重複、相似、一樣的情況出現，要嚴格執行提供的每個格子的動作指令
 格子順序由左至右、由上至下排列，左上第一格是01
 動作：
@@ -202,12 +202,12 @@
 02：描述`;
 
     // 動態貼圖 Prompt 預設模板（若 data.json 尚未包含 template2 時使用）
-    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 4×4 貼圖圖板。
+    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 3X3 貼圖圖板。
 
 基本規格：
-- 畫布尺寸：16:9
-- 排版方式：4×2，共 8 格。
-- 8 張貼圖需從左到右、從上到下排列。
+- 畫布尺寸：1:1
+- 排版方式：3X3，共 9 格。
+- 9 張貼圖需從左到右、從上到下排列。
 - 每張貼圖都必須完整位於各自格子中，不可互相重疊，而且上下左右必須距離格子5px。
 
 角色一致性：
@@ -252,7 +252,7 @@
 
 Text: everyday Chinese phrases, in a cute handwritten style with ink splash accents.，並設計每一格的表情、動作與文字： 
 
-請依照 4×2 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
+請依照 3X3 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
 
 16 句日常台詞內容：
 {linesText}`;
@@ -319,11 +319,12 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
         if (!config.template2b) config.template2b = defaultTemplateB2;
         if (!config.template2c) config.template2c = defaultTemplateC2;
         if (!config.presets2) config.presets2 = {};
-        preset2Meta.forEach(({ key }) => {
-            if (!Array.isArray(config.presets2[key]) || config.presets2[key].length !== 8) {
-                config.presets2[key] = (defaultPresets2[key] || []).slice(0, 8);
-            }
-        });
+       preset2Meta.forEach(({ key }) => {
+    let arr = Array.isArray(config.presets2[key]) ? config.presets2[key].slice(0, 9) : (defaultPresets2[key] || []).slice(0, 9);
+    const def = defaultPresets2[key] || [];
+    for (let i = arr.length; i < 9; i++) arr[i] = def[i] || '';
+    config.presets2[key] = arr;
+});
         if (!Array.isArray(config.phraseLibrary) || !config.phraseLibrary.length) {
             config.phraseLibrary = cloneDefaultLibrary();
         }
@@ -389,7 +390,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
             grid.className = 'preset2-grid';
 
             const lines = config.presets2[key] || [];
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 9; i++) {
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.placeholder = `台詞 ${i + 1}`;
