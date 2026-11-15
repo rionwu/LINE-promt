@@ -212,7 +212,7 @@
 <div class="container page" id="page2">
     <div class="header">
         <h1>動態貼圖 Prompt 生成器</h1>
-        <p>畫風可自訂、文字顏色可調整、8 句常用台詞，一鍵生成 3X3（9 格）動態貼圖製作提示詞</p>
+        <p>畫風可自訂、文字顏色可調整、9 句常用台詞，一鍵生成 3X3（9 格）動態貼圖製作提示詞</p>
     </div>
 
     <div class="color-grid">
@@ -327,18 +327,18 @@
 
     // 動態貼圖頁面的 8 句預設台詞：優先使用後台 (data.json -> config.presets2) 設定的內容，
     // 若尚未設定，才退回使用靜態頁面 16 句台詞的前 8 句作為預設值。
-    function presets8(key) {
-        if (config.presets2 && config.presets2[key]) {
-            return config.presets2[key];
-        }
-        return (presets[key] || []).slice(0, 9);
-    }
+function presets8(key) {
+    const base = (config.presets2 && config.presets2[key]) ? config.presets2[key].slice(0, 9) : [];
+    const fallback = presets[key] || [];
+    for (let i = base.length; i < 9; i++) base[i] = fallback[i] || '';
+    return base;
+}
 
     // 動作影片 Prompt（放在最下方）— 內建預設值，會被 data.json 的 config.template2c 覆蓋
     // {actions} 會被使用者在「動作內容」欄位輸入的文字取代
-    const defaultTemplateC2 = `圖片為4X2的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
+    const defaultTemplateC2 = `圖片為3X3的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖
 角色需保持跟原本一致角色,維持角色的外觀、毛色、臉型、身型完全一致，禁止變成另一個角色、顏色禁止變色
-製作4X2共8個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在4X2各自獨立的格子內。
+製作3X3共9個獨立動畫影片，每格角色不可以互相跨格或碰到其他格，影片從頭到尾所有動作及影片完全限制在3X3各自獨立的格子內。
 文字需要完整保留，人物跟文字禁止重疊
 禁止一切運鏡行為，讓角色維持一定的大小
 有粗細清楚的貼圖輪廓
@@ -411,7 +411,7 @@ Text: everyday Chinese phrases, in a cute handwritten style with ink splash acce
 
 請依照 3X3 排版順序，從左到右、從上到下，讓每一句台詞對應一格貼圖。每格可以加入對應台詞文字，但文字必須清楚、不要太小、不要超出該格範圍。
 
-16 句日常台詞內容：
+9 句日常台詞內容：
 {linesText}`;
 
     async function fetchConfig() {
