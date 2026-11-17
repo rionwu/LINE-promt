@@ -58,7 +58,7 @@
         .phrase-cat-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
         .phrase-cat-head input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.9rem; }
         .phrase-cat-head input.icon-input { width: 64px; text-align: center; }
-        .phrase-cat-head input.name-input { flex: 1; font-weight: 700; }
+        .phrase-cat head input.name-input { flex: 1; font-weight: 700; }
         .phrase-cat textarea { width: 100%; height: 130px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.88rem; outline: none; line-height: 1.6; resize: vertical; }
         .phrase-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     </style>
@@ -126,22 +126,29 @@
         <textarea id="template2cInput" class="template-box" style="height: 260px;"></textarea>
     </div>
 
+    <!-- 動態貼圖 - 分鏡圖 16幀動作 Prompt 設定 -->
+    <div class="card">
+        <h2>9. 動態貼圖 - 分鏡圖 16幀動作 Prompt 設定</h2>
+        <p class="card-desc">這裡設定動態貼圖-分鏡圖（入口三）最上方的 16幀動作 Prompt 內容。</p>
+        <textarea id="storyboardFirstStepInput" class="template-box" style="height: 160px;"></textarea>
+    </div>
+
     <!-- 動態貼圖 - 分鏡圖統一 Prompt 模板設定 -->
     <div class="card">
-        <h2>9. 動態貼圖 - 分鏡圖統一 Prompt 模板</h2>
+        <h2>10. 動態貼圖 - 分鏡圖統一 Prompt 模板</h2>
         <p class="card-desc">這裡設定動態貼圖-分鏡圖（入口三）的固定統一 Prompt 規則，會自動套用於每組動作前方。</p>
         <textarea id="storyboardMasterInput" class="template-box" style="height: 280px;"></textarea>
     </div>
 
     <!-- 動態貼圖 - 9 句常用台詞管理 -->
     <div class="card">
-        <h2>10. 動態貼圖 - 9 句常用台詞管理</h2>
+        <h2>11. 動態貼圖 - 9 句常用台詞管理</h2>
         <div id="presets2Container"></div>
     </div>
 
     <!-- 台詞庫管理 -->
     <div class="card">
-        <h2>11. 台詞庫管理（挑選台詞）</h2>
+        <h2>12. 台詞庫管理（挑選台詞）</h2>
         <div id="phraseLibraryContainer"></div>
         <div class="phrase-actions">
             <button class="btn btn-primary" onclick="addPhraseCategory()">+ 新增分類</button>
@@ -152,7 +159,7 @@
 
 <script src="phrase-picker.js"></script>
 <script>
-    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", storyboardMaster: "", presets2: {}, phraseLibrary: [] };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", storyboardMaster: "", storyboardFirstStep: "", presets2: {}, phraseLibrary: [] };
     let currentSha = "";
 
     const preset2Meta = [
@@ -171,6 +178,10 @@
         funny: ["要確定誒", "哭啊", "你厲害", "傻眼", "這是什麼鬼", "我看是你", "阿媽都比你強", "切!", "驚不驚喜"]
     };
 
+    const defaultStoryboardFirstStep = `為圖片裡的每一個角色設計4秒可循環撥放的動作表情，要做16幀的連續圖片，給我每張圖片詳細的 prompt，表情不要一樣，完全不同的情境也可以。限制影片的變化都要在單獨的圖片框框內，不可以超出框框，動作要明顯，不要秒數，提供我動作順序的文字描述，給我一鍵複製格式txet，不要多餘的指令，只要動作描述就好，提供規格如下：
+01：描述
+02：描述`;
+
     const defaultStoryboardMaster = `請將這張人物圖片設計成 GIF 動畫,提供一張4X4連續動作圖片給我,16幀必須是真正連續動作，不是重複圖片,順序由左至右,由上至下排列,提供我去背PNG檔案,不要有框線
 
 文字要求：
@@ -187,7 +198,7 @@
 - 文字不得壓在線條上造成角色缺口。
 - 文字必須放在角色外部的空白區域。
 - 文字必須與角色外輪廓保持明顯距離。
-- 文字不能碰到耳朵、頭頂,臉、手、腳、尾巴、衣服、道具或任何外輪廓線。
+- 文字不能碰到耳朵,頭頂,臉、手、腳、尾巴、衣服、道具或任何外輪廓線。
 - 若空間不足，請縮小文字或調整角色位置，不能讓文字壓在角色身上。
 
 角色一致性：
@@ -230,6 +241,7 @@
 
     function normalizeConfig() {
         if (!config.storyboardMaster) config.storyboardMaster = defaultStoryboardMaster;
+        if (!config.storyboardFirstStep) config.storyboardFirstStep = defaultStoryboardFirstStep;
         if (!config.presets2) config.presets2 = {};
         preset2Meta.forEach(({ key }) => {
             let arr = Array.isArray(config.presets2[key]) ? config.presets2[key].slice(0, 9) : (defaultPresets2[key] || []).slice(0, 9);
@@ -279,6 +291,7 @@
         document.getElementById('template2Input').value = config.template2 || '';
         document.getElementById('template2bInput').value = config.template2b || '';
         document.getElementById('template2cInput').value = config.template2c || '';
+        document.getElementById('storyboardFirstStepInput').value = config.storyboardFirstStep || defaultStoryboardFirstStep;
         document.getElementById('storyboardMasterInput').value = config.storyboardMaster || defaultStoryboardMaster;
 
         renderPresets2();
@@ -364,6 +377,7 @@
         config.template2 = document.getElementById('template2Input').value;
         config.template2b = document.getElementById('template2bInput').value;
         config.template2c = document.getElementById('template2cInput').value;
+        config.storyboardFirstStep = document.getElementById('storyboardFirstStepInput').value;
         config.storyboardMaster = document.getElementById('storyboardMasterInput').value;
 
         const encodedContent = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 4))));
