@@ -148,6 +148,7 @@
 
         .action-btn-wrapper { text-align: center; margin: 30px 0; }
         .btn-copy { background: var(--primary-green); color: white; border: none; padding: 12px 32px; font-size: 1.05rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
+        .btn-copy.copied { background: var(--success); }
 
         .output-card { background: #f1f5f9; border-radius: 12px; padding: 20px; margin-top: 20px; border: 1px solid var(--border-color); }
         .output-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
@@ -427,7 +428,16 @@
     </div>
     <div class="header">
         <h1>動態貼圖-分鏡圖 Prompt 生成器</h1>
-        <p>整批貼入動作 Prompt，自動識別分組並一鍵組合複製</p>
+        <p>整批貼入動作 Prompt，自動識別分組並一鍵組合複製（不記錄歷史以避免多人錯亂）</p>
+    </div>
+
+    <!-- 新增：16幀動作 Prompt 區塊 -->
+    <div class="output-card" style="margin-top: 0; margin-bottom: 28px; background: #ffffff; border: 2px solid var(--primary-indigo);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="color: var(--primary-indigo); font-size: 1.1rem; margin-bottom: 0;">🎬 16幀動作 Prompt</h3>
+            <button class="btn-copy" id="btnCopyFirstStep" onclick="copyStoryboardFirstStep()" style="padding: 8px 18px; font-size: 0.9rem;">📋 一鍵複製 16幀動作 Prompt</button>
+        </div>
+        <textarea id="storyboardFirstStepInput" readonly style="height: 140px; background: #f8fafc;"></textarea>
     </div>
 
     <div class="panel-layout">
@@ -450,10 +460,10 @@
         <!-- 右側：統一 Prompt -->
         <div class="panel">
             <div class="panel-header">
-                <label for="masterPrompt">2️⃣ 統一 Prompt（固定規則設定）</label>
+                <label for="masterPrompt">2️⃣ 統一 Prompt（從後台 data.json 讀取）</label>
             </div>
-            <textarea id="masterPrompt" rows="12" oninput="saveStoryboardData()"></textarea>
-            <div class="hint-text">💡 點擊下方任一張卡片的複製按鈕時，會自動將此區內容加在動作 Prompt 前方。</div>
+            <textarea id="masterPrompt" rows="12" readonly></textarea>
+            <div class="hint-text">🔒 此處的統一 Prompt 固定由後台控管，前台僅供檢視與組合使用。</div>
         </div>
     </div>
 
@@ -482,7 +492,7 @@
     }
 
     // 原有系統設定與邏輯
-    let config = { artStyles: [], subStyles: [], template: "" };
+    let config = { artStyles: [], subStyles: [], template: "", template2: "", template2a: "", template2b: "", template2c: "", storyboardMaster: "", storyboardFirstStep: "", presets2: {}, phraseLibrary: [] };
     let currentCategory = '可愛療癒系';
     let bgPickr, textPickr, textPickr2;
     let picker1, picker2;
@@ -503,36 +513,10 @@
         return base;
     }
 
-    const defaultTemplateC2 = `圖片為3X3的8格貼圖,依照圖片的角色與下列動作,製作出相對應的影片,動作幅度要大,表情清楚變化,適合做LINE動態貼圖...`;
-    const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像，設計後提供我角色的三向圖，正面、側面、背面\n\n角色畫風：{artStyle}`;
+    const defaultTemplateC2 = `圖片為3X3的9格貼圖,依照圖片的角色與下列動作,製作出相對應的影片...`;
+    const defaultTemplateA2 = `請依照提供的照片跟風格，設計出適合做LINE貼圖的圖像...`;
     const defaultTemplateB2 = `為這張圖片裡的每一個角色設計6秒的動作表情...`;
-    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色。請用 [我的角色] 生成一張適合製作貼圖的 3X3 貼圖圖板...`;
-
-    // 入口三的預設統一 Prompt
-    const defaultStoryboardMaster = `請將這張人物圖片設計成 GIF 動畫,提供一張4X4連續動作圖片給我,16幀必須是真正連續動作，不是重複圖片,順序由左至右,由上至下排列,提供我去背PNG檔案,不要有框線
-
-文字要求：
-- 要保留文字及白色框線
-- 文字必須清楚、不要太小。
-- 文字必須完整位於該格內。
-- 文字不得跨格。
-- 文字不得被裁切。
-- 文字不得碰到畫布邊緣。
-- 不添加任何額外的標誌或浮水印。
-
-文字與角色距離：
-- 文字不得覆蓋、壓住、穿過、遮擋或切到角色本體。
-- 文字不得壓在線條上造成角色缺口。
-- 文字必須放在角色外部的空白區域。
-- 文字必須與角色外輪廓保持明顯距離。
-- 文字不能碰到耳朵、頭頂、臉、手, 腳、尾巴、衣服、道具或任何外輪廓線。
-- 若空間不足，請縮小文字或調整角色位置，不能讓文字壓在角色身上。
-
-角色一致性：
-- 角色必須保持同一造型、同一配色、同一畫風與同一線條風格。
-- 不要讓角色在不同格子中變成不同角色。
-
-動作設計：`;
+    const defaultTemplate2 = `@創作圖像 以這個角色為我的角色...`;
 
     let parsedGroups = [];
 
@@ -545,10 +529,12 @@
             loadArtStyles2();
             buildPrompt();
             buildAllPrompts2();
+            initStoryboardData(); // 載入後台設定的 storyboardMaster 與 storyboardFirstStep
             if (picker1) picker1.refresh();
             if (picker2) picker2.refresh();
         } catch (e) {
-            console.warn('讀取 data.json 失敗，使用預設或稍後重試。');
+            console.warn('讀取 data.json 失敗，使用預設值。');
+            initStoryboardData();
         }
     }
 
@@ -559,7 +545,6 @@
         initPickers();
         applyPreset('daily');
         applyPreset2('daily');
-        initStoryboard();
         fetchConfig();
     }
 
@@ -796,17 +781,27 @@
     }
 
     // --- 入口三（分鏡圖自動分組工具）邏輯 ---
-    function initStoryboard() {
-        const saved = localStorage.getItem('storyboardToolData');
-        if (saved) {
-            const data = JSON.parse(saved);
-            document.getElementById('masterPrompt').value = data.master !== undefined ? data.master : defaultStoryboardMaster;
-            document.getElementById('batchInput').value = data.batchInput || '';
-        } else {
-            document.getElementById('masterPrompt').value = defaultStoryboardMaster;
-            document.getElementById('batchInput').value = '';
-        }
+    function initStoryboardData() {
+        document.getElementById('masterPrompt').value = config.storyboardMaster || '';
+        document.getElementById('storyboardFirstStepInput').value = config.storyboardFirstStep || '';
+        document.getElementById('batchInput').value = ''; // 每次進入或重整皆為空白，防止多人錯亂
         renderStoryboardCards();
+    }
+
+    async function copyStoryboardFirstStep() {
+        const text = document.getElementById('storyboardFirstStepInput').value;
+        const btn = document.getElementById('btnCopyFirstStep');
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = '✅ 已成功複製！';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📋 一鍵複製 16幀動作 Prompt';
+                btn.classList.remove('copied');
+            }, 1500);
+        } catch (err) {
+            alert('複製失敗，請手動複製。');
+        }
     }
 
     function parsePromptGroups(rawText) {
@@ -885,15 +880,7 @@
     }
 
     function handleBatchInput() {
-        saveStoryboardData();
         renderStoryboardCards();
-    }
-
-    function saveStoryboardData() {
-        localStorage.setItem('storyboardToolData', JSON.stringify({
-            master: document.getElementById('masterPrompt').value,
-            batchInput: document.getElementById('batchInput').value
-        }));
     }
 
     function clearBatchInput() {
