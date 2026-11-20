@@ -390,7 +390,7 @@
         <h3>預覽 Prompt</h3>
         <textarea id="promptOutput2" readonly></textarea>
     </div>
-    
+
     <div class="action-btn-wrapper">
         <button class="btn-copy" onclick="copyAndGenerate2()">📋 複製 常用台詞Prompt</button>
     </div>
@@ -431,7 +431,7 @@
         <p>整批貼入動作 Prompt，自動識別分組並一鍵組合複製（不記錄歷史以避免多人錯亂）</p>
     </div>
 
-    <!-- 新增：16幀動作 Prompt 區塊 -->
+    <!-- 16幀動作 Prompt 區塊 -->
     <div class="output-card" style="margin-top: 0; margin-bottom: 28px; background: #ffffff; border: 2px solid var(--primary-indigo);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: var(--primary-indigo); font-size: 1.1rem; margin-bottom: 0;">🎬 16幀動作 Prompt</h3>
@@ -449,12 +449,14 @@
             </div>
             <textarea id="batchInput" rows="12" placeholder="請直接在此貼上多組動作 Prompt，例如：
 
-01：做得好
-角色露出滿意又自信的笑容...
+第一組：做得好
+01：角色露出滿意又自信的笑容...
+...
+16：完成動作
 
-02：太厲害了
-角色雙眼瞬間睜大..." oninput="handleBatchInput()"></textarea>
-            <div class="hint-text">💡 支援貼入任意組數，只要開頭有數字編號（如 01： 或 1.），系統就會自動切分。</div>
+第二組：太厲害了
+01：角色雙眼瞬間睜大..." oninput="handleBatchInput()"></textarea>
+            <div class="hint-text">💡 支援貼入任意組數，組內 01–16 細部幀敘述會自動保留在同一組內，不會被拆散。</div>
         </div>
 
         <!-- 右側：統一 Prompt -->
@@ -529,7 +531,7 @@
             loadArtStyles2();
             buildPrompt();
             buildAllPrompts2();
-            initStoryboardData(); // 載入後台設定的 storyboardMaster 與 storyboardFirstStep
+            initStoryboardData();
             if (picker1) picker1.refresh();
             if (picker2) picker2.refresh();
         } catch (e) {
@@ -784,7 +786,7 @@
     function initStoryboardData() {
         document.getElementById('masterPrompt').value = config.storyboardMaster || '';
         document.getElementById('storyboardFirstStepInput').value = config.storyboardFirstStep || '';
-        document.getElementById('batchInput').value = ''; // 每次進入或重整皆為空白，防止多人錯亂
+        document.getElementById('batchInput').value = '';
         renderStoryboardCards();
     }
 
@@ -806,16 +808,76 @@
 
     function parsePromptGroups(rawText) {
         if (!rawText || !rawText.trim()) return [];
-        const regex = /(?:^|\n)\s*(\d{1,2}\s*[:：.、．\-\)]\s*[^\n]*|\d{1,2}\s+[^\n]+)/g;
-        const matches = [...rawText.matchAll(regex)];
-        if (matches.length === 0) return [{ title: "第 1 組動作", fullText: rawText.trim() }];
+
+        const lines = rawText.replace(/\r\n/g, '\n').split('\n');
         const groups = [];
-        for (let i = 0; i < matches.length; i++) {
-            const startIndex = matches[i].index + (matches[i][0].startsWith('\n') ? 1 : 0);
-            const endIndex = (i + 1 < matches.length) ? matches[i + 1].index : rawText.length;
-            groups.push({ title: matches[i][1].trim(), fullText: rawText.slice(startIndex, endIndex).trim() });
+        let currentGroup = null;
+        let inSubFrames = false;
+
+        // 明確的組別標題，例如：第一組：、第1組、第 01 組、組1：、Group 1
+        const explicitGroupRegex = /^\s*(?:第\s*\d+\s*組|組\s*\d+|group\s*\d+)\s*[:：.、．\-\)]?\s*(.*)$/i;
+        // 一般數字編號行，例如：01：...、1. ...
+        const numberedLineRegex = /^\s*(\d{1,2})\s*[:：.、．\-\)]\s*(.*)$/;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            const explicitMatch = trimmed.match(explicitGroupRegex);
+            const numMatch = trimmed.match(numberedLineRegex);
+
+            if (explicitMatch) {
+                if (currentGroup) groups.push(currentGroup);
+                currentGroup = { title: trimmed, fullText: line };
+                inSubFrames = false;
+                continue;
+            }
+
+            if (numMatch) {
+                const numVal = parseInt(numMatch[1], 10);
+
+                if (!currentGroup) {
+                    currentGroup = { title: trimmed, fullText: line };
+                    inSubFrames = false;
+                    continue;
+                }
+
+                // 若已在 01~16 細部幀序列中，1~16 均歸入同一組
+                if (inSubFrames && numVal >= 1 && numVal <= 16) {
+                    currentGroup.fullText += '\n' + line;
+                    continue;
+                }
+
+                // 若目前組已有內容，且再次出現編號 1（如 01：...），視為進入組內 01~16 細部幀敘述
+                if (!inSubFrames && numVal === 1 && currentGroup.fullText.includes('\n')) {
+                    inSubFrames = true;
+                    currentGroup.fullText += '\n' + line;
+                    continue;
+                }
+
+                groups.push(currentGroup);
+                currentGroup = { title: trimmed, fullText: line };
+                inSubFrames = false;
+                continue;
+            }
+
+            if (!currentGroup) {
+                if (trimmed) {
+                    currentGroup = { title: trimmed.slice(0, 30), fullText: line };
+                }
+            } else {
+                currentGroup.fullText += '\n' + line;
+            }
         }
-        return groups;
+
+        if (currentGroup && currentGroup.fullText.trim()) {
+            groups.push(currentGroup);
+        }
+
+        return groups.map(g => ({
+            title: g.title,
+            fullText: g.fullText.trim()
+        }));
     }
 
     function renderStoryboardCards() {
